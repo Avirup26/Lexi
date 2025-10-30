@@ -1,0 +1,26 @@
+/* Content script styles for Lexi */
+
+#lexi-translation-widget {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Highlight selected text that can be translated */
+.lexi-selectable {
+  cursor: pointer;
+  position: relative;
+}
+
+.lexi-selectable:hover {
+  background-color: rgba(14, 165, 233, 0.1);
+}
