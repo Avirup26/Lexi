@@ -49,6 +49,72 @@ document.addEventListener('keydown', (event: KeyboardEvent) => {
   }
 });
 
+// Save translation to history for dashboard
+async function saveTranslationToHistory(
+  original: string,
+  translation: string,
+  sourceLang: string,
+  targetLang: string
+) {
+  try {
+    const result = await chrome.storage.local.get(['translationHistory', 'vocabulary', 'stats']);
+    const translationHistory = result.translationHistory || [];
+    const vocabulary = result.vocabulary || [];
+    const stats = result.stats || {
+      totalTranslations: 0,
+      totalWords: 0,
+      exercisesCompleted: 0,
+      currentStreak: 1,
+      lastActiveDate: new Date().toISOString().split('T')[0]
+    };
+
+    // Add to translation history
+    translationHistory.unshift({
+      original,
+      translation,
+      sourceLang,
+      targetLang,
+      timestamp: Date.now()
+    });
+
+    // Keep only last 100 translations
+    if (translationHistory.length > 100) {
+      translationHistory.splice(100);
+    }
+
+    // If it's a single word, add to vocabulary
+    const wordCount = original.trim().split(/\s+/).length;
+    if (wordCount === 1) {
+      const existingWord = vocabulary.find((v: any) => v.word.toLowerCase() === original.toLowerCase());
+      if (!existingWord) {
+        vocabulary.unshift({
+          word: original,
+          translation,
+          sourceLang,
+          targetLang,
+          timestamp: Date.now(),
+          reviewCount: 0
+        });
+        stats.totalWords = vocabulary.length;
+      }
+    }
+
+    // Update stats
+    stats.totalTranslations = translationHistory.length;
+    stats.lastActiveDate = new Date().toISOString().split('T')[0];
+
+    await chrome.storage.local.set({ 
+      translationHistory, 
+      vocabulary,
+      stats 
+    });
+    
+    console.log('✅ Translation saved to dashboard');
+  } catch (error) {
+    console.error('Error saving translation:', error);
+  }
+}
+
 // Close overlay when clicking outside
 document.addEventListener('mousedown', (event: MouseEvent) => {
   const target = event.target as HTMLElement;
@@ -243,6 +309,9 @@ async function handleTranslation(text: string) {
     
     console.log('Translation successful:', translatedText);
     console.log(`Translated from ${sourceLanguage} to ${targetLanguage}`);
+    
+    // Save translation to history
+    await saveTranslationToHistory(text, translatedText, sourceLanguage, targetLanguage);
     
     // Display translation result
     let resultHTML = `
