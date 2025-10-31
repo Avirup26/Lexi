@@ -590,9 +590,36 @@ async function addAIDefinitions(
           systemPrompt: 'You are a helpful language learning assistant. Provide brief, clear definitions in one sentence. Be concise.'
         });
         
-        sourceDef = await session.prompt(`Define "${originalWord}" in one brief sentence.`);
-        targetDef = await session.prompt(`Define "${translatedWord}" in one brief sentence.`);
-        ipa = await session.prompt(`Provide only the IPA (International Phonetic Alphabet) pronunciation for "${originalWord}". Return only the IPA string between forward slashes, nothing else.`);
+        // Try prompts with backward compatibility
+        try {
+          sourceDef = await session.prompt(`Define "${originalWord}" in one brief sentence.`);
+          targetDef = await session.prompt(`Define "${translatedWord}" in one brief sentence.`);
+          ipa = await session.prompt(`Provide only the IPA (International Phonetic Alphabet) pronunciation for "${originalWord}". Return only the IPA string between forward slashes, nothing else.`);
+        } catch (error) {
+          console.log('Old format failed, trying new format...');
+          // Try new multimodal format as fallback
+          sourceDef = await session.prompt([{
+            role: 'user',
+            content: [{
+              type: 'text',
+              value: `Define "${originalWord}" in one brief sentence.`
+            }]
+          }]);
+          targetDef = await session.prompt([{
+            role: 'user',
+            content: [{
+              type: 'text',
+              value: `Define "${translatedWord}" in one brief sentence.`
+            }]
+          }]);
+          ipa = await session.prompt([{
+            role: 'user',
+            content: [{
+              type: 'text',
+              value: `Provide only the IPA (International Phonetic Alphabet) pronunciation for "${originalWord}". Return only the IPA string between forward slashes, nothing else.`
+            }]
+          }]);
+        }
         
         session.destroy();
       } else {
@@ -1014,16 +1041,24 @@ async function showPronunciation(word: string, language: string, container: HTML
     
     // Create session for IPA pronunciation
     const session = await (self as any).ai.languageModel.create({
-      initialPrompts: [
-        {
-          role: 'system',
-          content: 'You are a pronunciation expert. Provide only the IPA (International Phonetic Alphabet) transcription for words. Return only the IPA string, nothing else.'
-        }
-      ]
+      systemPrompt: 'You are a pronunciation expert. Provide only the IPA transcription for words.'
     });
     
     const languageName = getLanguageName(language);
-    const ipa = await session.prompt(`IPA pronunciation for "${word}" in ${languageName}:`);
+    let ipa;
+    try {
+      // Try old format first
+      ipa = await session.prompt(`IPA pronunciation for "${word}" in ${languageName}:`);
+    } catch (error) {
+      // Fallback to new format
+      ipa = await session.prompt([{
+        role: 'user',
+        content: [{
+          type: 'text',
+          value: `Provide only the IPA transcription for "${word}" in ${languageName}.`
+        }]
+      }]);
+    }
     session.destroy();
     
     // Display pronunciation
@@ -1166,29 +1201,43 @@ async function addDefinitions(
     
     console.log('✅ Prompt API available, creating session...');
     
-    // Create language model session with proper options
+    // Create language model session
     const session = await (self as any).ai.languageModel.create({
-      initialPrompts: [
-        {
-          role: 'system',
-          content: 'You are a helpful language learning assistant. Provide concise, clear definitions in one sentence.'
-        }
-      ]
+      systemPrompt: 'You are a helpful language learning assistant. Provide concise, clear definitions in one sentence.'
     });
     
     console.log('✅ Session created, fetching definitions...');
     
-    // Get definition in source language
-    const sourceDefPrompt = `Define "${originalWord}" in one brief sentence.`;
-    console.log('Source prompt:', sourceDefPrompt);
-    const sourceDef = await session.prompt(sourceDefPrompt);
-    console.log('Source definition:', sourceDef);
-    
-    // Get definition in target language  
-    const targetDefPrompt = `Define "${translatedWord}" in one brief sentence.`;
-    console.log('Target prompt:', targetDefPrompt);
-    const targetDef = await session.prompt(targetDefPrompt);
-    console.log('Target definition:', targetDef);
+    // Get definition in source language with backward compatibility
+    console.log('Fetching source definition...');
+    let sourceDef, targetDef;
+    try {
+      sourceDef = await session.prompt(`Define "${originalWord}" in one brief sentence.`);
+      console.log('Source definition:', sourceDef);
+      
+      targetDef = await session.prompt(`Define "${translatedWord}" in one brief sentence.`);
+      console.log('Target definition:', targetDef);
+    } catch (error) {
+      console.log('Old format failed, trying new format...');
+      // Fallback to new multimodal format
+      sourceDef = await session.prompt([{
+        role: 'user',
+        content: [{
+          type: 'text',
+          value: `Define "${originalWord}" in one brief sentence.`
+        }]
+      }]);
+      console.log('Source definition:', sourceDef);
+      
+      targetDef = await session.prompt([{
+        role: 'user',
+        content: [{
+          type: 'text',
+          value: `Define "${translatedWord}" in one brief sentence.`
+        }]
+      }]);
+      console.log('Target definition:', targetDef);
+    }
     
     // Clean up session
     session.destroy();
