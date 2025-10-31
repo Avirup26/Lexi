@@ -3,6 +3,9 @@
   "name": "Lexi",
   "version": "1.0.0",
   "description": "Privacy-first, offline AI language-learning companion for every webpage",
+  "origin_trial_tokens": [
+    "Ar2qtm0kSLkMyUvBWfTshEph7rz1DY4k9wGADAjAACgxDnWQ28pwjFgzVBsHlnPFI9F0Mpp/dPR4d3kYrnpSzQkAAAB7eyJvcmlnaW4iOiJjaHJvbWUtZXh0ZW5zaW9uOi8vZmNnbGJoYWpnYWtnb2lnaGRkbGJmZGVsa2Vnb2RqZXAiLCJmZWF0dXJlIjoiQUlQcm9tcHRBUElNdWx0aW1vZGFsSW5wdXQiLCJleHBpcnkiOjE3NzQzMTA0MDB9"
+  ],
   "permissions": [
     "storage",
     "activeTab",
