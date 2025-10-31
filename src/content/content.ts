@@ -15,6 +15,14 @@ document.addEventListener('mouseup', (event: MouseEvent) => {
     return;
   }
   
+  // Don't show overlay in password fields or contenteditable
+  if (target.tagName === 'INPUT' && (target as HTMLInputElement).type === 'password') {
+    return;
+  }
+  if (target.isContentEditable) {
+    return;
+  }
+  
   // Don't create new overlay if we're currently translating
   if (isTranslating) {
     console.log('Translation in progress, ignoring mouseup');
@@ -32,6 +40,21 @@ document.addEventListener('mouseup', (event: MouseEvent) => {
       showLexiOverlay(selectedText, lastMouseX, lastMouseY);
     }
   }, 10);
+});
+
+// Close overlay on Escape key
+document.addEventListener('keydown', (event: KeyboardEvent) => {
+  if (event.key === 'Escape') {
+    removeOverlay();
+  }
+});
+
+// Close overlay when clicking outside
+document.addEventListener('mousedown', (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (currentOverlay && !target.closest('.lexi-overlay')) {
+    removeOverlay();
+  }
 });
 
 // Listen for messages from popup or background script
@@ -126,14 +149,14 @@ async function handleTranslation(text: string) {
     // Get settings from storage
     let targetLanguage = 'es'; // Default to Spanish
     let nativeLanguage = 'en'; // Default to English
-    let showDefinitions = true;
+    // let showDefinitions = true; // Disabled temporarily
     
     try {
       const result = await chrome.storage.local.get(['settings']);
       if (result.settings) {
         targetLanguage = result.settings.targetLanguage || 'es';
         nativeLanguage = result.settings.nativeLanguage || 'en';
-        showDefinitions = result.settings.showDefinitions !== false;
+        // showDefinitions = result.settings.showDefinitions !== false; // Disabled temporarily
       }
     } catch (e) {
       console.log('Using default settings');
@@ -259,8 +282,17 @@ async function handleTranslation(text: string) {
     
     resultContainer.innerHTML = resultHTML;
     
-    // Add definitions if enabled and text is a single word
+    // Prompt API features disabled temporarily (waiting for API availability)
+    // Uncomment when Prompt API is available in your Chrome version
+    
+    /*
+    // Add pronunciation button for single words
     const wordCount = text.trim().split(/\s+/).length;
+    if (wordCount === 1) {
+      addPronunciationButton(text, sourceLanguage, resultContainer);
+    }
+    
+    // Add definitions if enabled and text is a single word
     console.log(`Word count: ${wordCount}, showDefinitions: ${showDefinitions}`);
     
     if (showDefinitions && wordCount === 1) {
@@ -273,6 +305,7 @@ async function handleTranslation(text: string) {
     } else if (wordCount > 1) {
       console.log('Skipping definitions - multiple words detected');
     }
+    */
     
     // Clear translating flag after successful translation
     isTranslating = false;
@@ -326,7 +359,200 @@ function escapeHtml(text: string): string {
   return div.innerHTML;
 }
 
-// Add word definitions using Prompt API
+// Add pronunciation button (Disabled - waiting for Prompt API)
+/*
+function addPronunciationButton(word: string, language: string, container: HTMLElement) {
+  const buttonHTML = `
+    <button
+      id="lexi-pronunciation-btn"
+      style="
+        width: 100%;
+        margin-top: 12px;
+        padding: 12px;
+        background: linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%);
+        border: 2px solid #0ea5e9;
+        border-radius: 8px;
+        color: #0369a1;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: all 0.2s;
+      "
+      onmouseover="this.style.background='linear-gradient(135deg, #bae6fd 0%, #e0f2fe 100%)'"
+      onmouseout="this.style.background='linear-gradient(135deg, #e0f2fe 0%, #ffffff 100%)'"
+      aria-label="Show pronunciation"
+    >
+      <span style="font-size: 18px;">🔊</span>
+      <span>Show Pronunciation</span>
+    </button>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', buttonHTML);
+  
+  // Add click handler
+  const btn = container.querySelector('#lexi-pronunciation-btn') as HTMLButtonElement;
+  if (btn) {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      await showPronunciation(word, language, container);
+    });
+  }
+}
+
+// Show pronunciation using Prompt API
+async function showPronunciation(word: string, language: string, container: HTMLElement) {
+  try {
+    // Check if Prompt API is available
+    if (!(self as any).ai || !(self as any).ai.languageModel) {
+      console.log('❌ Prompt API not available for pronunciation');
+      showPronunciationError(container);
+      return;
+    }
+    
+    const availability = await (self as any).ai.languageModel.availability();
+    
+    if (availability === 'unavailable' || availability === 'after-download') {
+      showPronunciationError(container);
+      return;
+    }
+    
+    // Show loading state
+    const btn = container.querySelector('#lexi-pronunciation-btn') as HTMLButtonElement;
+    if (btn) {
+      btn.innerHTML = `
+        <span style="font-size: 18px;">⏳</span>
+        <span>Loading...</span>
+      `;
+      btn.disabled = true;
+    }
+    
+    // Create session for IPA pronunciation
+    const session = await (self as any).ai.languageModel.create({
+      initialPrompts: [
+        {
+          role: 'system',
+          content: 'You are a pronunciation expert. Provide only the IPA (International Phonetic Alphabet) transcription for words. Return only the IPA string, nothing else.'
+        }
+      ]
+    });
+    
+    const languageName = getLanguageName(language);
+    const ipa = await session.prompt(`IPA pronunciation for "${word}" in ${languageName}:`);
+    session.destroy();
+    
+    // Display pronunciation
+    const pronunciationHTML = `
+      <div id="lexi-pronunciation-display" style="
+        padding: 14px;
+        background: #dbeafe;
+        border-radius: 8px;
+        border: 2px solid #3b82f6;
+        margin-top: 12px;
+      ">
+        <div style="
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 8px;
+        ">
+          <span style="font-size: 16px;">🔊</span>
+          <span style="
+            font-size: 12px;
+            color: #1e40af;
+            font-weight: 700;
+          ">Pronunciation (IPA)</span>
+        </div>
+        <div style="
+          font-size: 20px;
+          color: #1e3a8a;
+          font-family: 'Courier New', monospace;
+          font-weight: 600;
+          margin-bottom: 10px;
+        ">/${escapeHtml(ipa.trim())}/</div>
+        <button
+          id="lexi-speak-btn"
+          style="
+            padding: 8px 16px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+          "
+          aria-label="Play pronunciation"
+        >
+          <span>🔈</span>
+          <span>Play Audio</span>
+        </button>
+      </div>
+    `;
+    
+    // Remove button and add pronunciation display
+    btn?.remove();
+    container.insertAdjacentHTML('beforeend', pronunciationHTML);
+    
+    // Add speak button handler (for future implementation)
+    const speakBtn = container.querySelector('#lexi-speak-btn') as HTMLButtonElement;
+    if (speakBtn) {
+      speakBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log(`🔊 Play audio for: ${word} (${ipa})`);
+        // Future: Implement Web Speech API or audio playback
+      });
+    }
+    
+  } catch (error) {
+    console.error('Pronunciation error:', error);
+    showPronunciationError(container);
+  }
+}
+
+// Show pronunciation error
+function showPronunciationError(container: HTMLElement) {
+  const btn = container.querySelector('#lexi-pronunciation-btn') as HTMLButtonElement;
+  if (btn) {
+    btn.innerHTML = `
+      <span style="font-size: 18px;">⚠️</span>
+      <span>Pronunciation unavailable</span>
+    `;
+    btn.disabled = true;
+    btn.style.background = '#fee2e2';
+    btn.style.borderColor = '#fca5a5';
+    btn.style.color = '#991b1b';
+  }
+}
+*/
+
+// Get language name from code
+/*
+function getLanguageName(code: string): string {
+  const names: { [key: string]: string } = {
+    'en': 'English',
+    'es': 'Spanish',
+    'fr': 'French',
+    'de': 'German',
+    'it': 'Italian',
+    'pt': 'Portuguese',
+    'ja': 'Japanese',
+    'ko': 'Korean',
+    'zh': 'Chinese'
+  };
+  return names[code] || 'English';
+}
+*/
+
+// Add word definitions using Prompt API (Disabled - waiting for Prompt API)
+/*
 async function addDefinitions(
   originalWord: string,
   translatedWord: string,
@@ -336,44 +562,55 @@ async function addDefinitions(
 ) {
   try {
     console.log('=== Definition Feature Debug ===');
-    console.log('ai in self:', 'ai' in self);
-    console.log('self.ai:', (self as any).ai);
     
     // Check if Prompt API is available
-    if (!('ai' in self)) {
-      console.log('❌ Prompt API (ai) not available in self');
+    if (!(self as any).ai || !(self as any).ai.languageModel) {
+      console.log('❌ Prompt API not available - ai.languageModel is undefined');
+      console.log('Please enable chrome://flags/#prompt-api-for-gemini-nano');
       return;
     }
     
-    const ai = (self as any).ai;
-    console.log('ai object:', ai);
-    console.log('languageModel in ai:', 'languageModel' in ai);
+    const availability = await (self as any).ai.languageModel.availability();
+    console.log('Prompt API availability:', availability);
     
-    if (!('languageModel' in ai)) {
-      console.log('❌ languageModel not available in ai');
+    if (availability === 'unavailable') {
+      console.log('❌ Prompt API not available');
+      return;
+    }
+    
+    if (availability === 'after-download') {
+      console.log('⏳ Gemini Nano model needs to be downloaded first');
       return;
     }
     
     console.log('✅ Prompt API available, creating session...');
     
-    // Create language model session
-    const session = await ai.languageModel.create({
-      systemPrompt: `You are a helpful language learning assistant. Provide concise, clear definitions.`
+    // Create language model session with proper options
+    const session = await (self as any).ai.languageModel.create({
+      initialPrompts: [
+        {
+          role: 'system',
+          content: 'You are a helpful language learning assistant. Provide concise, clear definitions in one sentence.'
+        }
+      ]
     });
     
     console.log('✅ Session created, fetching definitions...');
     
     // Get definition in source language
-    const sourceDefPrompt = `Define the word "${originalWord}" in ${sourceLang === 'en' ? 'English' : sourceLang}. Give a brief, one-sentence definition.`;
+    const sourceDefPrompt = `Define "${originalWord}" in one brief sentence.`;
     console.log('Source prompt:', sourceDefPrompt);
     const sourceDef = await session.prompt(sourceDefPrompt);
     console.log('Source definition:', sourceDef);
     
-    // Get definition in target language
-    const targetDefPrompt = `Define the word "${translatedWord}" in ${targetLang === 'en' ? 'English' : targetLang}. Give a brief, one-sentence definition.`;
+    // Get definition in target language  
+    const targetDefPrompt = `Define "${translatedWord}" in one brief sentence.`;
     console.log('Target prompt:', targetDefPrompt);
     const targetDef = await session.prompt(targetDefPrompt);
     console.log('Target definition:', targetDef);
+    
+    // Clean up session
+    session.destroy();
     
     // Append definitions to container
     const defHTML = `
@@ -434,6 +671,7 @@ async function addDefinitions(
     // Silently fail - definitions are optional
   }
 }
+*/
 
 // Show Lexi overlay near text selection
 function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
@@ -673,13 +911,24 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
   setupOverlayCloseListeners();
 }
 
-// Remove current overlay
+// Remove current overlay with animation
 function removeOverlay() {
   if (currentOverlay) {
-    currentOverlay.remove();
-    currentOverlay = null;
-    removeOverlayCloseListeners();
+    // Add closing animation
+    currentOverlay.classList.add('lexi-closing');
+    
+    // Remove from DOM after animation completes
+    setTimeout(() => {
+      if (currentOverlay) {
+        currentOverlay.remove();
+        currentOverlay = null;
+        removeOverlayCloseListeners();
+      }
+    }, 150); // Match animation duration
   }
+  
+  // Reset translating flag
+  isTranslating = false;
 }
 
 // Event handler references (need to be stored to remove later)
@@ -733,11 +982,22 @@ style.textContent = `
   @keyframes lexiFadeIn {
     from {
       opacity: 0;
-      transform: translateY(-5px) scale(0.98);
+      transform: translateY(-8px) scale(0.96);
     }
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
+    }
+  }
+  
+  @keyframes lexiFadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.96);
     }
   }
   
@@ -751,11 +1011,23 @@ style.textContent = `
   }
   
   .lexi-overlay {
-    will-change: opacity;
+    will-change: opacity, transform;
+    animation: lexiFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .lexi-overlay.lexi-closing {
+    animation: lexiFadeOut 0.15s cubic-bezier(0.4, 0, 1, 1) forwards;
   }
   
   .lexi-overlay * {
     box-sizing: border-box;
+  }
+  
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .lexi-overlay {
+      border-width: 3px !important;
+    }
   }
 `;
 document.head.appendChild(style);
