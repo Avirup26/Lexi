@@ -282,21 +282,18 @@ async function handleTranslation(text: string) {
     
     resultContainer.innerHTML = resultHTML;
     
-    // Add AI-powered features for single words (now enabled with Origin Trial token)
+    // Add interactive learning overlay for single words
     const wordCount = text.trim().split(/\s+/).length;
     if (wordCount === 1) {
-      console.log('=== Single word detected, attempting AI features ===');
-      console.log('Extension ID:', chrome.runtime.id);
-      console.log('Checking Prompt API availability...');
-      console.log('self.ai exists:', !!(self as any).ai);
-      console.log('self.ai.languageModel exists:', !!(self as any).ai?.languageModel);
-      
+      console.log('=== Single word detected, showing interactive learning overlay ===');
+      // Show interactive learning overlay instead of inline content
+      showInteractiveLearningOverlay(text, translatedText, sourceLanguage, targetLanguage);
+    } else {
+      // For phrases/sentences, show AI definitions inline
       try {
         await addAIDefinitions(text, translatedText, sourceLanguage, targetLanguage, resultContainer);
       } catch (error) {
-        console.error('❌ AI features failed:', error);
-        console.log('Falling back to simple word info card');
-        addSimpleWordInfo(text, translatedText, sourceLanguage, targetLanguage, resultContainer);
+        console.log('AI features not available for phrases');
       }
     }
     
@@ -580,8 +577,9 @@ async function addAIDefinitions(
   console.log(`✅ AI definitions added successfully (${isRealAI ? 'real AI' : 'demo mode'})`);
 }
 
-// Add simple word information (fallback when AI not available)
-function addSimpleWordInfo(
+// Add simple word information (fallback when AI not available) - kept for backward compatibility
+// @ts-ignore - Function kept for potential future use
+function _addSimpleWordInfo(
   originalWord: string,
   translatedWord: string,
   sourceLang: string,
@@ -1439,6 +1437,992 @@ function createTranslationWidget(text: string, translation: string) {
   setTimeout(() => {
     widget.remove();
   }, 10000);
+}
+
+// Show interactive learning overlay for single words
+async function showInteractiveLearningOverlay(
+  word: string,
+  translation: string,
+  sourceLang: string,
+  targetLang: string
+) {
+  // Remove any existing learning overlay
+  const existing = document.getElementById('lexi-learning-overlay');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create overlay container (top-right position)
+  const overlay = document.createElement('div');
+  overlay.id = 'lexi-learning-overlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.3), 0 8px 16px rgba(0, 0, 0, 0.1);
+    z-index: 2147483647;
+    font-family: system-ui, -apple-system, sans-serif;
+    animation: lexiSlideIn 0.3s ease-out;
+    cursor: default;
+  `;
+
+  // Get stored word data from chrome.storage
+  let storedData: any = null;
+  try {
+    const result = await chrome.storage.local.get(['wordData']);
+    if (result.wordData && result.wordData[word.toLowerCase()]) {
+      storedData = result.wordData[word.toLowerCase()];
+    }
+  } catch (error) {
+    console.log('Could not fetch stored word data:', error);
+  }
+
+  // Generate example sentence
+  const exampleSentence = generateExampleSentence(word, sourceLang);
+
+  overlay.innerHTML = `
+    <!-- Header with controls -->
+    <div style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      border-radius: 14px 14px 0 0;
+      color: white;
+    ">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">📚</span>
+        <span style="font-size: 16px; font-weight: 700;">Word Practice</span>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button id="lexi-learning-pin" style="
+          background: rgba(255,255,255,0.2);
+          border: none;
+          border-radius: 6px;
+          padding: 6px 10px;
+          color: white;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s;
+        " title="Pin overlay">📌</button>
+        <button id="lexi-learning-expand" style="
+          background: rgba(255,255,255,0.2);
+          border: none;
+          border-radius: 6px;
+          padding: 6px 10px;
+          color: white;
+          cursor: pointer;
+          font-size: 14px;
+          transition: all 0.2s;
+        " title="Expand">⬍</button>
+        <button id="lexi-learning-close" style="
+          background: rgba(255,255,255,0.2);
+          border: none;
+          border-radius: 6px;
+          padding: 6px 10px;
+          color: white;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: bold;
+          transition: all 0.2s;
+        ">×</button>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 20px;">
+      <!-- Word & Translation -->
+      <div style="
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        border-left: 4px solid #3b82f6;
+      ">
+        <div style="font-size: 12px; color: #1e40af; font-weight: 600; margin-bottom: 8px;">
+          ${sourceLang.toUpperCase()} → ${targetLang.toUpperCase()}
+        </div>
+        <div style="font-size: 24px; color: #1e3a8a; font-weight: 700; margin-bottom: 8px;">
+          ${escapeHtml(word)}
+        </div>
+        <div style="font-size: 20px; color: #3b82f6; font-weight: 600;">
+          ${escapeHtml(translation)}
+        </div>
+      </div>
+
+      <!-- Example Sentence -->
+      <div style="
+        background: #fef3c7;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 16px;
+        border-left: 4px solid #f59e0b;
+      ">
+        <div style="font-size: 11px; color: #92400e; font-weight: 700; margin-bottom: 6px;">
+          💡 EXAMPLE SENTENCE
+        </div>
+        <div style="font-size: 14px; color: #78350f; line-height: 1.6;">
+          ${escapeHtml(exampleSentence)}
+        </div>
+      </div>
+
+      ${storedData ? `
+      <!-- Stored Information -->
+      <div style="
+        background: #f0fdf4;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 16px;
+        border-left: 4px solid #22c55e;
+      ">
+        <div style="font-size: 11px; color: #166534; font-weight: 700; margin-bottom: 6px;">
+          📝 YOUR NOTES
+        </div>
+        <div style="font-size: 13px; color: #15803d; line-height: 1.5;">
+          ${escapeHtml(storedData.notes || 'No notes yet')}
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- Practice Section -->
+      <div style="
+        background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+        border-radius: 12px;
+        padding: 16px;
+        border: 2px solid #fbbf24;
+      ">
+        <div style="font-size: 13px; color: #92400e; font-weight: 700; margin-bottom: 12px;">
+          ✍️ Practice: Write a sentence using "${escapeHtml(word)}"
+        </div>
+        <textarea id="lexi-practice-input" style="
+          width: 100%;
+          min-height: 80px;
+          padding: 12px;
+          border: 2px solid #fbbf24;
+          border-radius: 8px;
+          font-size: 14px;
+          font-family: inherit;
+          resize: vertical;
+          box-sizing: border-box;
+        " placeholder="Type your sentence here..."></textarea>
+        
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button id="lexi-check-sentence" style="
+            flex: 1;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">
+            ✓ Check Sentence
+          </button>
+          <button id="lexi-rewrite-sentence" style="
+            flex: 1;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+          ">
+            ✨ Rewrite
+          </button>
+        </div>
+        
+        <!-- Grammar Check Button -->
+        <button id="lexi-open-grammar-check" style="
+          width: 100%;
+          background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          margin-top: 8px;
+        ">
+          📝 Open Grammar Coach
+        </button>
+
+        <!-- Feedback Area -->
+        <div id="lexi-feedback-area" style="margin-top: 12px; display: none;"></div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // Add event listeners
+  setupLearningOverlayListeners(overlay, word, translation, sourceLang, targetLang);
+
+  // Add slide-in animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes lexiSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Setup event listeners for learning overlay
+function setupLearningOverlayListeners(
+  overlay: HTMLElement,
+  word: string,
+  _translation: string,
+  _sourceLang: string,
+  _targetLang: string
+) {
+  const closeBtn = overlay.querySelector('#lexi-learning-close') as HTMLButtonElement;
+  const pinBtn = overlay.querySelector('#lexi-learning-pin') as HTMLButtonElement;
+  const expandBtn = overlay.querySelector('#lexi-learning-expand') as HTMLButtonElement;
+  const checkBtn = overlay.querySelector('#lexi-check-sentence') as HTMLButtonElement;
+  const rewriteBtn = overlay.querySelector('#lexi-rewrite-sentence') as HTMLButtonElement;
+  const grammarBtn = overlay.querySelector('#lexi-open-grammar-check') as HTMLButtonElement;
+  const practiceInput = overlay.querySelector('#lexi-practice-input') as HTMLTextAreaElement;
+  const feedbackArea = overlay.querySelector('#lexi-feedback-area') as HTMLDivElement;
+
+  let isPinned = false;
+  let isExpanded = false;
+
+  // Close button
+  closeBtn?.addEventListener('click', () => {
+    overlay.style.animation = 'lexiSlideOut 0.3s ease-in';
+    setTimeout(() => overlay.remove(), 300);
+  });
+
+  // Pin button
+  pinBtn?.addEventListener('click', () => {
+    isPinned = !isPinned;
+    pinBtn.textContent = isPinned ? '📍' : '📌';
+    pinBtn.title = isPinned ? 'Unpin overlay' : 'Pin overlay';
+    if (isPinned) {
+      overlay.style.cursor = 'default';
+    }
+  });
+
+  // Expand button
+  expandBtn?.addEventListener('click', () => {
+    isExpanded = !isExpanded;
+    if (isExpanded) {
+      overlay.style.width = '600px';
+      expandBtn.textContent = '⬌';
+    } else {
+      overlay.style.width = '420px';
+      expandBtn.textContent = '⬍';
+    }
+  });
+
+  // Check sentence button
+  checkBtn?.addEventListener('click', async () => {
+    const sentence = practiceInput.value.trim();
+    if (!sentence) {
+      showFeedback(feedbackArea, 'Please write a sentence first!', 'warning');
+      return;
+    }
+
+    checkBtn.disabled = true;
+    checkBtn.textContent = '⏳ Checking...';
+
+    try {
+      await checkSentenceWithProofreader(sentence, word, feedbackArea);
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✓ Check Sentence';
+    } catch (error) {
+      const err = error as Error;
+      console.error('Proofreader API error:', err.message);
+      showFeedback(feedbackArea, `⚠️ Proofreader API not available: ${err.message}`, 'error');
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✓ Check Sentence';
+    }
+  });
+
+  // Rewrite sentence button
+  rewriteBtn?.addEventListener('click', async () => {
+    const sentence = practiceInput.value.trim();
+    if (!sentence) {
+      showFeedback(feedbackArea, 'Please write a sentence first!', 'warning');
+      return;
+    }
+
+    rewriteBtn.disabled = true;
+    rewriteBtn.textContent = '⏳ Rewriting...';
+
+    try {
+      await rewriteSentence(sentence, practiceInput, feedbackArea);
+      rewriteBtn.disabled = false;
+      rewriteBtn.textContent = '✨ Rewrite';
+    } catch (error) {
+      console.log('Rewriter API not available');
+      showFeedback(feedbackArea, '⚠️ Rewriter API not available in your browser yet. The sentence looks good as is!', 'warning');
+      rewriteBtn.disabled = false;
+      rewriteBtn.textContent = '✨ Rewrite';
+    }
+  });
+
+  // Grammar Check button
+  grammarBtn?.addEventListener('click', () => {
+    const text = practiceInput.value.trim();
+    openGrammarCoach(text);
+  });
+
+  // Make draggable if not pinned
+  makeDraggable(overlay);
+}
+
+// Generate example sentence for a word
+function generateExampleSentence(word: string, _lang: string): string {
+  const wordLower = word.toLowerCase();
+  
+  const examples: { [key: string]: string } = {
+    'next': 'The next train arrives in five minutes.',
+    'particularly': 'I particularly enjoy reading science fiction novels.',
+    'laureate': 'The Nobel laureate delivered an inspiring speech.',
+    'hello': 'She said hello to everyone at the party.',
+    'world': 'The world is full of amazing places to explore.',
+    'language': 'Learning a new language opens many doors.',
+    'translate': 'Can you translate this document for me?',
+    'learn': 'I want to learn how to play the guitar.',
+    'word': 'Every word in this sentence has meaning.',
+    'book': 'I read an interesting book last week.',
+  };
+
+  return examples[wordLower] || `I use the word "${word}" in my daily conversations.`;
+}
+
+// Check sentence with Proofreader API
+async function checkSentenceWithProofreader(
+  sentence: string,
+  targetWord: string,
+  feedbackArea: HTMLDivElement
+) {
+  // Check if Proofreader API is available
+  if (!(self as any).Proofreader) {
+    throw new Error('Proofreader API not available');
+  }
+
+  const availability = await (self as any).Proofreader.availability();
+  if (availability !== 'readily' && availability !== 'available') {
+    throw new Error(`Proofreader not ready. Status: ${availability}`);
+  }
+
+  const proofreader = await (self as any).Proofreader.create({
+    expectedInputLanguages: ['en'],
+    outputLanguage: 'en'
+  });
+
+  const result = await proofreader.proofread(sentence);
+  
+  // Check if target word is used
+  const wordUsed = sentence.toLowerCase().includes(targetWord.toLowerCase());
+  
+  if (result.corrections && result.corrections.length > 0) {
+    // Has corrections
+    showFeedback(
+      feedbackArea,
+      `Good try! ${wordUsed ? '✓ Word used correctly' : '⚠️ Word not found in sentence'}<br><br>
+      <strong>Suggestions:</strong><br>
+      ${result.corrections.map((c: any) => `• ${c.suggestion || 'Grammar improvement needed'}`).join('<br>')}
+      <br><br><strong>Corrected:</strong> ${escapeHtml(result.corrected)}`,
+      'partial'
+    );
+  } else if (wordUsed) {
+    // Perfect!
+    showFeedback(
+      feedbackArea,
+      `🎉 Excellent! Your sentence is grammatically correct and uses "${escapeHtml(targetWord)}" properly!`,
+      'success'
+    );
+  } else {
+    // Word not used
+    showFeedback(
+      feedbackArea,
+      `⚠️ Your sentence looks good, but it doesn't include the word "${escapeHtml(targetWord)}". Try again!`,
+      'warning'
+    );
+  }
+
+  proofreader.destroy();
+}
+
+
+// Rewrite sentence with Rewriter API
+async function rewriteSentence(
+  sentence: string,
+  input: HTMLTextAreaElement,
+  feedbackArea: HTMLDivElement
+) {
+  if (!(self as any).Rewriter) {
+    throw new Error('Rewriter API not available');
+  }
+
+  const availability = await (self as any).Rewriter.availability();
+  if (availability === 'unavailable') {
+    throw new Error('Rewriter not ready');
+  }
+
+  const rewriter = await (self as any).Rewriter.create({
+    tone: 'more-formal',
+    format: 'plain-text',
+    length: 'as-is'
+  });
+
+  const rewritten = await rewriter.rewrite(sentence);
+  
+  input.value = rewritten;
+  showFeedback(
+    feedbackArea,
+    `✨ Sentence rewritten in a more formal tone!`,
+    'success'
+  );
+
+  rewriter.destroy();
+}
+
+// Show feedback in the feedback area
+function showFeedback(area: HTMLDivElement, message: string, type: 'success' | 'partial' | 'warning' | 'error') {
+  const colors = {
+    success: { bg: '#f0fdf4', border: '#22c55e', text: '#166534' },
+    partial: { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+    warning: { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+    error: { bg: '#fef2f2', border: '#dc2626', text: '#991b1b' }
+  };
+
+  const color = colors[type];
+  
+  area.style.display = 'block';
+  area.innerHTML = `
+    <div style="
+      background: ${color.bg};
+      border: 2px solid ${color.border};
+      border-radius: 8px;
+      padding: 12px;
+      color: ${color.text};
+      font-size: 13px;
+      line-height: 1.6;
+    ">
+      ${message}
+    </div>
+  `;
+}
+
+// Open Grammar Coach modal
+function openGrammarCoach(initialText: string = '') {
+  // Remove existing grammar coach if any
+  const existing = document.getElementById('lexi-grammar-coach');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.id = 'lexi-grammar-coach';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: lexiFadeIn 0.2s ease-out;
+  `;
+
+  // Create modal content
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: lexiSlideUp 0.3s ease-out;
+  `;
+
+  content.innerHTML = `
+    <!-- Header -->
+    <div style="
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      padding: 20px 24px;
+      border-radius: 14px 14px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    ">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 28px;">📝</span>
+        <div>
+          <div style="font-size: 20px; font-weight: 700; color: white;">Grammar Coach</div>
+          <div style="font-size: 13px; color: rgba(255,255,255,0.9);">AI-powered grammar & style checking</div>
+        </div>
+      </div>
+      <button id="lexi-grammar-close" style="
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        font-weight: bold;
+        transition: all 0.2s;
+      ">×</button>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 24px;">
+      <!-- Input Area -->
+      <div style="margin-bottom: 20px;">
+        <label style="
+          display: block;
+          font-size: 14px;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 8px;
+        ">Enter your text to check:</label>
+        <textarea id="lexi-grammar-input" style="
+          width: 100%;
+          min-height: 150px;
+          padding: 14px;
+          border: 2px solid #d1d5db;
+          border-radius: 10px;
+          font-size: 15px;
+          font-family: inherit;
+          resize: vertical;
+          box-sizing: border-box;
+          transition: border-color 0.2s;
+        " placeholder="Type or paste your text here...
+Example: I seen him yesterday at the store, and he bought two loafs of bread.">${escapeHtml(initialText)}</textarea>
+      </div>
+
+      <!-- Check Button -->
+      <button id="lexi-grammar-check-btn" style="
+        width: 100%;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 20px;
+      ">
+        ✓ Check Grammar & Spelling
+      </button>
+
+      <!-- Results Area -->
+      <div id="lexi-grammar-results" style="display: none;"></div>
+
+      <!-- API Status -->
+      <div id="lexi-grammar-status" style="
+        text-align: center;
+        padding: 12px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #6b7280;
+      ">
+        <span id="lexi-api-status">Checking API availability...</span>
+      </div>
+    </div>
+  `;
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  // Check API availability
+  checkProofreaderAvailability();
+
+  // Setup event listeners
+  setupGrammarCoachListeners(modal);
+
+  // Add animations
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes lexiSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Check Proofreader API availability
+async function checkProofreaderAvailability() {
+  const statusEl = document.getElementById('lexi-api-status');
+  if (!statusEl) return;
+
+  try {
+    if (!(self as any).Proofreader) {
+      statusEl.innerHTML = '⚠️ Proofreader API not supported in this browser. Please use Chrome 141+ with flags enabled.';
+      statusEl.style.background = '#fef2f2';
+      statusEl.style.color = '#991b1b';
+      return;
+    }
+
+    const availability = await (self as any).Proofreader.availability();
+    
+    if (availability === 'readily' || availability === 'available') {
+      statusEl.innerHTML = '✅ Proofreader API ready! All checks are performed locally on your device.';
+      statusEl.style.background = '#f0fdf4';
+      statusEl.style.color = '#166534';
+    } else if (availability === 'after-download') {
+      statusEl.innerHTML = '⏳ Downloading AI model... This may take a few minutes.';
+      statusEl.style.background = '#fef3c7';
+      statusEl.style.color = '#92400e';
+    } else {
+      statusEl.innerHTML = `⚠️ Proofreader API status: ${availability}. Check chrome://flags/#proofreader-api-for-gemini-nano`;
+      statusEl.style.background = '#fef2f2';
+      statusEl.style.color = '#991b1b';
+    }
+  } catch (error) {
+    statusEl.innerHTML = '❌ Error checking API availability';
+    statusEl.style.background = '#fef2f2';
+    statusEl.style.color = '#991b1b';
+  }
+}
+
+// Setup Grammar Coach event listeners
+function setupGrammarCoachListeners(modal: HTMLElement) {
+  const closeBtn = modal.querySelector('#lexi-grammar-close') as HTMLButtonElement;
+  const checkBtn = modal.querySelector('#lexi-grammar-check-btn') as HTMLButtonElement;
+  const input = modal.querySelector('#lexi-grammar-input') as HTMLTextAreaElement;
+  const resultsArea = modal.querySelector('#lexi-grammar-results') as HTMLDivElement;
+
+  // Close modal
+  closeBtn?.addEventListener('click', () => {
+    modal.style.animation = 'lexiFadeOut 0.2s ease-in';
+    setTimeout(() => modal.remove(), 200);
+  });
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.animation = 'lexiFadeOut 0.2s ease-in';
+      setTimeout(() => modal.remove(), 200);
+    }
+  });
+
+  // Check grammar button
+  checkBtn?.addEventListener('click', async () => {
+    const text = input.value.trim();
+    if (!text) {
+      showGrammarResults(resultsArea, [], text, true);
+      return;
+    }
+
+    checkBtn.disabled = true;
+    checkBtn.textContent = '⏳ Checking...';
+
+    try {
+      await performGrammarCheck(text, resultsArea);
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✓ Check Grammar & Spelling';
+    } catch (error) {
+      const err = error as Error;
+      console.log('Proofreader API not available:', err.message);
+      showGrammarError(resultsArea, err);
+      checkBtn.disabled = false;
+      checkBtn.textContent = '✓ Check Grammar & Spelling';
+    }
+  });
+}
+
+// Perform grammar check with Proofreader API (NO FALLBACKS)
+async function performGrammarCheck(text: string, resultsArea: HTMLDivElement) {
+  if (!(self as any).Proofreader) {
+    throw new Error('Proofreader API not available in this browser');
+  }
+
+  const availability = await (self as any).Proofreader.availability();
+  if (availability !== 'readily' && availability !== 'available') {
+    throw new Error(`Proofreader API not ready. Status: ${availability}. Check chrome://flags/#proofreader-api-for-gemini-nano`);
+  }
+
+  const proofreader = await (self as any).Proofreader.create({
+    expectedInputLanguages: ['en'],
+    outputLanguage: 'en'
+  });
+
+  const result = await proofreader.proofread(text);
+  
+  // Display results from real API only
+  showGrammarResults(resultsArea, result.corrections || [], result.correctedInput || text, false);
+
+  proofreader.destroy();
+}
+
+// Show grammar check results
+function showGrammarResults(
+  area: HTMLDivElement,
+  corrections: any[],
+  correctedText: string,
+  isEmpty: boolean
+) {
+  area.style.display = 'block';
+
+  if (isEmpty) {
+    area.innerHTML = `
+      <div style="
+        text-align: center;
+        padding: 40px 20px;
+        color: #9ca3af;
+      ">
+        <div style="font-size: 48px; margin-bottom: 12px;">📝</div>
+        <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">No text to check</div>
+        <div style="font-size: 14px;">Enter some text above to get started!</div>
+      </div>
+    `;
+    return;
+  }
+
+  if (corrections.length === 0) {
+    area.innerHTML = `
+      <div style="
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 2px solid #22c55e;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+      ">
+        <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+        <div style="font-size: 18px; font-weight: 700; color: #166534; margin-bottom: 8px;">
+          Perfect! No errors found
+        </div>
+        <div style="font-size: 14px; color: #15803d;">
+          Your text is grammatically correct and well-written.
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Group corrections by type
+  const byType: { [key: string]: any[] } = {};
+  corrections.forEach(c => {
+    const type = c.type || 'other';
+    if (!byType[type]) byType[type] = [];
+    byType[type].push(c);
+  });
+
+  const typeIcons: { [key: string]: string } = {
+    'grammar': '📖',
+    'spelling': '✏️',
+    'punctuation': '❗',
+    'style': '✨',
+    'other': '📝'
+  };
+
+  const typeColors: { [key: string]: { bg: string, border: string, text: string } } = {
+    'grammar': { bg: '#fef3c7', border: '#f59e0b', text: '#92400e' },
+    'spelling': { bg: '#fef2f2', border: '#ef4444', text: '#991b1b' },
+    'punctuation': { bg: '#eff6ff', border: '#3b82f6', text: '#1e40af' },
+    'style': { bg: '#f5f3ff', border: '#8b5cf6', text: '#5b21b6' },
+    'other': { bg: '#f3f4f6', border: '#6b7280', text: '#374151' }
+  };
+
+  let html = `
+    <div style="
+      background: #fef3c7;
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    ">
+      <div style="font-size: 16px; font-weight: 700; color: #92400e; margin-bottom: 8px;">
+        Found ${corrections.length} issue${corrections.length !== 1 ? 's' : ''}
+      </div>
+      <div style="font-size: 14px; color: #78350f;">
+        Review the suggestions below to improve your writing.
+      </div>
+    </div>
+  `;
+
+  // Show corrected text
+  html += `
+    <div style="
+      background: #f0fdf4;
+      border: 2px solid #22c55e;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    ">
+      <div style="font-size: 13px; font-weight: 700; color: #166534; margin-bottom: 8px;">
+        ✓ CORRECTED TEXT
+      </div>
+      <div style="font-size: 15px; color: #15803d; line-height: 1.7;">
+        ${escapeHtml(correctedText)}
+      </div>
+    </div>
+  `;
+
+  // Show errors by type
+  html += '<div style="margin-top: 20px;">';
+  
+  Object.keys(byType).forEach(type => {
+    const errors = byType[type];
+    const color = typeColors[type] || typeColors['other'];
+    const icon = typeIcons[type] || typeIcons['other'];
+
+    html += `
+      <div style="
+        background: ${color.bg};
+        border: 2px solid ${color.border};
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      ">
+        <div style="
+          font-size: 14px;
+          font-weight: 700;
+          color: ${color.text};
+          margin-bottom: 12px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">
+          ${icon} ${type} (${errors.length})
+        </div>
+        ${errors.map((err, idx) => {
+          // Handle Proofreader API response format
+          const correction = err.correction || err.suggestion || '';
+          const position = err.startIndex !== undefined ? `at position ${err.startIndex}` : '';
+          const issue = err.original || (correction ? `Missing: "${correction}"` : 'Error detected');
+          
+          return `
+          <div style="
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: ${idx < errors.length - 1 ? '8px' : '0'};
+          ">
+            <div style="font-size: 14px; color: #374151; margin-bottom: 6px;">
+              <strong>Issue:</strong> ${escapeHtml(issue)} ${position}
+            </div>
+            ${correction ? `
+              <div style="font-size: 14px; color: #059669; margin-bottom: 6px;">
+                <strong>Correction:</strong> Add "${escapeHtml(correction)}"
+              </div>
+            ` : ''}
+            ${err.explanation ? `
+              <div style="font-size: 13px; color: #6b7280; font-style: italic;">
+                ${escapeHtml(err.explanation)}
+              </div>
+            ` : ''}
+          </div>
+        `;
+        }).join('')}
+      </div>
+    `;
+  });
+
+  html += '</div>';
+
+  // Add grammar tips and API note
+  html += `
+    <div style="
+      background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);
+      border: 2px solid #f59e0b;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 20px;
+    ">
+      <div style="font-size: 13px; font-weight: 700; color: #92400e; margin-bottom: 6px;">
+        ℹ️ Note
+      </div>
+      <div style="font-size: 12px; color: #78350f; line-height: 1.6;">
+        The Proofreader API currently focuses on punctuation, spelling, and basic grammar. Complex grammar errors may not be detected.
+      </div>
+    </div>
+    
+    <div style="
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+      border: 2px solid #3b82f6;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    ">
+      <div style="font-size: 14px; font-weight: 700; color: #1e40af; margin-bottom: 8px;">
+        💡 Grammar Tips
+      </div>
+      <ul style="
+        margin: 0;
+        padding-left: 20px;
+        font-size: 13px;
+        color: #1e3a8a;
+        line-height: 1.7;
+      ">
+        <li>Read your text aloud to catch awkward phrasing</li>
+        <li>Use active voice for clearer, more direct writing</li>
+        <li>Keep sentences concise and focused on one idea</li>
+        <li>Proofread multiple times, focusing on different aspects each time</li>
+      </ul>
+    </div>
+  `;
+
+  area.innerHTML = html;
+}
+
+// Show grammar check error
+function showGrammarError(area: HTMLDivElement, error: any) {
+  area.style.display = 'block';
+  area.innerHTML = `
+    <div style="
+      background: #fef2f2;
+      border: 2px solid #ef4444;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    ">
+      <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
+      <div style="font-size: 16px; font-weight: 700; color: #991b1b; margin-bottom: 8px;">
+        Grammar Check Unavailable
+      </div>
+      <div style="font-size: 14px; color: #7f1d1d; margin-bottom: 12px;">
+        ${escapeHtml(error.message || 'Could not perform grammar check')}
+      </div>
+      <div style="font-size: 13px; color: #991b1b;">
+        Make sure you're using Chrome 141+ with the Proofreader API enabled in chrome://flags
+      </div>
+    </div>
+  `;
 }
 
 // Make element draggable
