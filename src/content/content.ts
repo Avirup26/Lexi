@@ -420,6 +420,80 @@ function getLanguageName(code: string): string {
   return names[code] || code;
 }
 
+// Speak word using Web Speech API (Standard Web API - No Origin Trial Needed)
+function speakWord(word: string, languageCode: string, button?: HTMLButtonElement) {
+  try {
+    // Check if speech synthesis is available
+    if (!('speechSynthesis' in window)) {
+      console.error('❌ Speech Synthesis API not supported in this browser');
+      alert('Speech synthesis is not supported in your browser. Please use Chrome, Firefox, Safari, or Edge.');
+      return;
+    }
+
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
+    // Visual feedback - update button
+    const originalHTML = button?.innerHTML;
+    if (button) {
+      button.disabled = true;
+      button.innerHTML = '<span style="font-size: 16px;">🔊</span><span>Speaking...</span>';
+    }
+
+    // Create speech utterance
+    const utterance = new SpeechSynthesisUtterance(word);
+    
+    // Map language codes to speech synthesis language codes
+    const langMap: { [key: string]: string } = {
+      'en': 'en-US',
+      'es': 'es-ES',
+      'fr': 'fr-FR',
+      'de': 'de-DE',
+      'it': 'it-IT',
+      'pt': 'pt-PT',
+      'ja': 'ja-JP',
+      'ko': 'ko-KR',
+      'zh': 'zh-CN'
+    };
+    
+    utterance.lang = langMap[languageCode] || 'en-US';
+    utterance.rate = 0.85; // Slower for better pronunciation
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    // Event handlers for better feedback
+    utterance.onstart = () => {
+      console.log(`🔊 Started speaking: "${word}" in ${utterance.lang}`);
+    };
+
+    utterance.onend = () => {
+      console.log(`✅ Finished speaking: "${word}"`);
+      // Restore button
+      if (button && originalHTML) {
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+      }
+    };
+
+    utterance.onerror = (event) => {
+      console.error('❌ Speech synthesis error:', event.error);
+      // Restore button
+      if (button && originalHTML) {
+        button.disabled = false;
+        button.innerHTML = originalHTML;
+      }
+      alert(`Speech error: ${event.error}. Please try again.`);
+    };
+
+    // Speak the word
+    window.speechSynthesis.speak(utterance);
+
+  } catch (error) {
+    console.error('❌ Error speaking word:', error);
+    alert('Failed to speak the word. Please try again.');
+  }
+}
+
 // Add AI-powered definitions using Prompt API or intelligent fallback
 async function addAIDefinitions(
   originalWord: string,
@@ -513,11 +587,72 @@ async function addAIDefinitions(
           margin-bottom: 6px;
         ">🔊 PRONUNCIATION</div>
         <div style="
-          font-size: 20px;
-          color: #78350f;
-          font-family: 'Courier New', monospace;
-          font-weight: 600;
-        ">${escapeHtml(ipa.trim())}</div>
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          justify-content: space-between;
+        ">
+          <div style="
+            font-size: 20px;
+            color: #78350f;
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+          ">${escapeHtml(ipa.trim())}</div>
+          <div style="display: flex; gap: 6px;">
+            <button
+              class="lexi-speak-source-inline-btn"
+              data-word="${escapeHtml(originalWord)}"
+              data-lang="${sourceLang}"
+              style="
+                padding: 6px 12px;
+                background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(251, 191, 36, 0.3);
+              "
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(251, 191, 36, 0.4)'"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(251, 191, 36, 0.3)'"
+              title="Pronounce in ${sourceLang.toUpperCase()}"
+            >
+              <span style="font-size: 14px;">🔊</span>
+              <span>${sourceLang.toUpperCase()}</span>
+            </button>
+            <button
+              class="lexi-speak-target-inline-btn"
+              data-word="${escapeHtml(translatedWord)}"
+              data-lang="${targetLang}"
+              style="
+                padding: 6px 12px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+              "
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.4)'"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.3)'"
+              title="Pronounce in ${targetLang.toUpperCase()}"
+            >
+              <span style="font-size: 14px;">🔊</span>
+              <span>${targetLang.toUpperCase()}</span>
+            </button>
+          </div>
+        </div>
       </div>
       
       <!-- Original Definition -->
@@ -575,6 +710,28 @@ async function addAIDefinitions(
   
   container.insertAdjacentHTML('beforeend', aiHTML);
   console.log(`✅ AI definitions added successfully (${isRealAI ? 'real AI' : 'demo mode'})`);
+  
+  // Add event listeners for speak buttons
+  const speakSourceBtn = container.querySelector('.lexi-speak-source-inline-btn') as HTMLButtonElement;
+  const speakTargetBtn = container.querySelector('.lexi-speak-target-inline-btn') as HTMLButtonElement;
+  
+  if (speakSourceBtn) {
+    speakSourceBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const word = speakSourceBtn.getAttribute('data-word') || originalWord;
+      const lang = speakSourceBtn.getAttribute('data-lang') || sourceLang;
+      speakWord(word, lang, speakSourceBtn);
+    });
+  }
+  
+  if (speakTargetBtn) {
+    speakTargetBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const word = speakTargetBtn.getAttribute('data-word') || translatedWord;
+      const lang = speakTargetBtn.getAttribute('data-lang') || targetLang;
+      speakWord(word, lang, speakTargetBtn);
+    });
+  }
 }
 
 // Add simple word information (fallback when AI not available) - kept for backward compatibility
@@ -1588,8 +1745,70 @@ async function showInteractiveLearningOverlay(
         <div style="font-size: 24px; color: #1e3a8a; font-weight: 700; margin-bottom: 8px;">
           ${escapeHtml(word)}
         </div>
-        <div style="font-size: 20px; color: #3b82f6; font-weight: 600;">
-          ${escapeHtml(translation)}
+        <div style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          margin-bottom: 8px;
+        ">
+          <div style="font-size: 20px; color: #3b82f6; font-weight: 600;">
+            ${escapeHtml(translation)}
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button
+              class="lexi-speak-source-btn"
+              data-word="${escapeHtml(word)}"
+              data-lang="${sourceLang}"
+              style="
+                padding: 8px 14px;
+                background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+              "
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(59, 130, 246, 0.4)'"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(59, 130, 246, 0.3)'"
+              title="Pronounce in ${sourceLang.toUpperCase()}"
+            >
+              <span style="font-size: 16px;">🔊</span>
+              <span>${sourceLang.toUpperCase()}</span>
+            </button>
+            <button
+              class="lexi-speak-target-btn"
+              data-word="${escapeHtml(translation)}"
+              data-lang="${targetLang}"
+              style="
+                padding: 8px 14px;
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                border: none;
+                border-radius: 6px;
+                color: white;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+              "
+              onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 4px 8px rgba(16, 185, 129, 0.4)'"
+              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 4px rgba(16, 185, 129, 0.3)'"
+              title="Pronounce in ${targetLang.toUpperCase()}"
+            >
+              <span style="font-size: 16px;">🔊</span>
+              <span>${targetLang.toUpperCase()}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1730,7 +1949,7 @@ function setupLearningOverlayListeners(
   overlay: HTMLElement,
   word: string,
   _translation: string,
-  _sourceLang: string,
+  sourceLang: string,
   _targetLang: string
 ) {
   const closeBtn = overlay.querySelector('#lexi-learning-close') as HTMLButtonElement;
@@ -1741,9 +1960,27 @@ function setupLearningOverlayListeners(
   const grammarBtn = overlay.querySelector('#lexi-open-grammar-check') as HTMLButtonElement;
   const practiceInput = overlay.querySelector('#lexi-practice-input') as HTMLTextAreaElement;
   const feedbackArea = overlay.querySelector('#lexi-feedback-area') as HTMLDivElement;
+  const speakSourceBtn = overlay.querySelector('.lexi-speak-source-btn') as HTMLButtonElement;
+  const speakTargetBtn = overlay.querySelector('.lexi-speak-target-btn') as HTMLButtonElement;
 
   let isPinned = false;
   let isExpanded = false;
+
+  // Speak source language button
+  speakSourceBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wordToSpeak = speakSourceBtn.getAttribute('data-word') || word;
+    const lang = speakSourceBtn.getAttribute('data-lang') || sourceLang;
+    speakWord(wordToSpeak, lang, speakSourceBtn);
+  });
+
+  // Speak target language button
+  speakTargetBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const wordToSpeak = speakTargetBtn.getAttribute('data-word') || _translation;
+    const lang = speakTargetBtn.getAttribute('data-lang') || _targetLang;
+    speakWord(wordToSpeak, lang, speakTargetBtn);
+  });
 
   // Close button
   closeBtn?.addEventListener('click', () => {
