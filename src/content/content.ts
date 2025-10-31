@@ -1181,6 +1181,27 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
       >
         🌐 Translate
       </button>
+      <button 
+        id="lexi-summarize-btn"
+        tabindex="0"
+        style="
+          flex: 1;
+          background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 10px 16px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+        "
+        onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 8px rgba(139, 92, 246, 0.4)';"
+        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 4px rgba(139, 92, 246, 0.3)';"
+      >
+        📝 Summarize
+      </button>
     </div>
     
     <!-- Translation result container -->
@@ -1198,6 +1219,7 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
     // Query buttons from within the overlay element
     const closeBtn = overlay.querySelector('#lexi-overlay-close') as HTMLButtonElement;
     const translateBtn = overlay.querySelector('#lexi-translate-btn') as HTMLButtonElement;
+    const summarizeBtn = overlay.querySelector('#lexi-summarize-btn') as HTMLButtonElement;
     
     if (closeBtn) {
       console.log('✅ Close button found');
@@ -1265,6 +1287,19 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
       console.log('✅ Translate button focused');
     } else {
       console.error('❌ Translate button not found');
+    }
+    
+    // Summarize button handler
+    if (summarizeBtn) {
+      console.log('✅ Summarize button found');
+      summarizeBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log('📝 Summarize button clicked!');
+        openSummarizerModal(selectedText);
+      });
+    } else {
+      console.error('❌ Summarize button not found');
     }
   }, 100);
   
@@ -2423,6 +2458,365 @@ function showGrammarError(area: HTMLDivElement, error: any) {
       </div>
     </div>
   `;
+}
+
+// Open Summarizer modal
+function openSummarizerModal(text: string) {
+  // Remove existing summarizer if any
+  const existing = document.getElementById('lexi-summarizer');
+  if (existing) {
+    existing.remove();
+  }
+
+  // Create modal overlay
+  const modal = document.createElement('div');
+  modal.id = 'lexi-summarizer';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2147483647;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: lexiFadeIn 0.2s ease-out;
+  `;
+
+  // Create modal content
+  const content = document.createElement('div');
+  content.style.cssText = `
+    background: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    animation: lexiSlideUp 0.3s ease-out;
+  `;
+
+  content.innerHTML = `
+    <!-- Header -->
+    <div style="
+      background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      padding: 20px 24px;
+      border-radius: 14px 14px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    ">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 28px;">📝</span>
+        <div>
+          <div style="font-size: 20px; font-weight: 700; color: white;">Quick Summary</div>
+          <div style="font-size: 13px; color: rgba(255,255,255,0.9);">AI-powered text summarization</div>
+        </div>
+      </div>
+      <button id="lexi-summarizer-close" style="
+        background: rgba(255,255,255,0.2);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        font-weight: bold;
+        transition: all 0.2s;
+      ">×</button>
+    </div>
+
+    <!-- Content -->
+    <div style="padding: 24px;">
+      <!-- Options -->
+      <div style="margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">
+              Summary Type
+            </label>
+            <select id="lexi-summary-type" style="
+              width: 100%;
+              padding: 10px;
+              border: 2px solid #d1d5db;
+              border-radius: 8px;
+              font-size: 14px;
+              cursor: pointer;
+            ">
+              <option value="key-points">Key Points</option>
+              <option value="tl;dr">TL;DR</option>
+              <option value="teaser">Teaser</option>
+              <option value="headline">Headline</option>
+            </select>
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px;">
+              Length
+            </label>
+            <select id="lexi-summary-length" style="
+              width: 100%;
+              padding: 10px;
+              border: 2px solid #d1d5db;
+              border-radius: 8px;
+              font-size: 14px;
+              cursor: pointer;
+            ">
+              <option value="short">Short</option>
+              <option value="medium" selected>Medium</option>
+              <option value="long">Long</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Original Text Preview -->
+      <div style="
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px;
+        margin-bottom: 16px;
+        max-height: 150px;
+        overflow-y: auto;
+      ">
+        <div style="font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 6px;">
+          ORIGINAL TEXT (${text.split(/\s+/).length} words)
+        </div>
+        <div style="font-size: 14px; color: #374151; line-height: 1.6;">
+          ${escapeHtml(text.substring(0, 300))}${text.length > 300 ? '...' : ''}
+        </div>
+      </div>
+
+      <!-- Summarize Button -->
+      <button id="lexi-summarize-action" style="
+        width: 100%;
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 14px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 20px;
+      ">
+        ✨ Generate Summary
+      </button>
+
+      <!-- Results Area -->
+      <div id="lexi-summary-results" style="display: none;"></div>
+
+      <!-- API Status -->
+      <div id="lexi-summarizer-status" style="
+        text-align: center;
+        padding: 12px;
+        background: #f3f4f6;
+        border-radius: 8px;
+        font-size: 13px;
+        color: #6b7280;
+      ">
+        <span id="lexi-summarizer-api-status">Checking API availability...</span>
+      </div>
+    </div>
+  `;
+
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+
+  // Check API availability
+  checkSummarizerAvailability();
+
+  // Setup event listeners
+  setupSummarizerListeners(modal, text);
+}
+
+// Check Summarizer API availability
+async function checkSummarizerAvailability() {
+  const statusEl = document.getElementById('lexi-summarizer-api-status');
+  if (!statusEl) return;
+
+  try {
+    if (!(self as any).Summarizer) {
+      statusEl.innerHTML = '⚠️ Summarizer API not supported. Available in Chrome 138+.';
+      statusEl.style.background = '#fef2f2';
+      statusEl.style.color = '#991b1b';
+      return;
+    }
+
+    const availability = await (self as any).Summarizer.availability();
+    
+    if (availability === 'readily' || availability === 'available') {
+      statusEl.innerHTML = '✅ Summarizer API ready! Summaries are generated locally.';
+      statusEl.style.background = '#f0fdf4';
+      statusEl.style.color = '#166534';
+    } else if (availability === 'after-download') {
+      statusEl.innerHTML = '⏳ Downloading AI model...';
+      statusEl.style.background = '#fef3c7';
+      statusEl.style.color = '#92400e';
+    } else {
+      statusEl.innerHTML = `⚠️ Summarizer status: ${availability}`;
+      statusEl.style.background = '#fef2f2';
+      statusEl.style.color = '#991b1b';
+    }
+  } catch (error) {
+    statusEl.innerHTML = '❌ Error checking API';
+    statusEl.style.background = '#fef2f2';
+    statusEl.style.color = '#991b1b';
+  }
+}
+
+// Setup Summarizer event listeners
+function setupSummarizerListeners(modal: HTMLElement, text: string) {
+  const closeBtn = modal.querySelector('#lexi-summarizer-close') as HTMLButtonElement;
+  const summarizeBtn = modal.querySelector('#lexi-summarize-action') as HTMLButtonElement;
+  const typeSelect = modal.querySelector('#lexi-summary-type') as HTMLSelectElement;
+  const lengthSelect = modal.querySelector('#lexi-summary-length') as HTMLSelectElement;
+  const resultsArea = modal.querySelector('#lexi-summary-results') as HTMLDivElement;
+
+  // Close modal
+  closeBtn?.addEventListener('click', () => {
+    modal.style.animation = 'lexiFadeOut 0.2s ease-in';
+    setTimeout(() => modal.remove(), 200);
+  });
+
+  // Click outside to close
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.animation = 'lexiFadeOut 0.2s ease-in';
+      setTimeout(() => modal.remove(), 200);
+    }
+  });
+
+  // Summarize button
+  summarizeBtn?.addEventListener('click', async () => {
+    const type = typeSelect.value;
+    const length = lengthSelect.value;
+
+    summarizeBtn.disabled = true;
+    summarizeBtn.textContent = '⏳ Generating summary...';
+
+    try {
+      await performSummarization(text, type, length, resultsArea);
+    } catch (error) {
+      console.error('Summarization error:', error);
+      showSummaryError(resultsArea, error as Error);
+    } finally {
+      summarizeBtn.disabled = false;
+      summarizeBtn.textContent = '✨ Generate Summary';
+    }
+  });
+}
+
+// Perform summarization with Summarizer API
+async function performSummarization(
+  text: string,
+  type: string,
+  length: string,
+  resultsArea: HTMLDivElement
+) {
+  if (!(self as any).Summarizer) {
+    throw new Error('Summarizer API not available');
+  }
+
+  const availability = await (self as any).Summarizer.availability();
+  if (availability !== 'readily' && availability !== 'available') {
+    throw new Error(`Summarizer not ready. Status: ${availability}`);
+  }
+
+  const summarizer = await (self as any).Summarizer.create({
+    type: type,
+    format: 'markdown',
+    length: length
+  });
+
+  const summary = await summarizer.summarize(text);
+  
+  // Display results
+  showSummaryResults(resultsArea, summary, type);
+
+  // Store summary in local storage
+  await storeSummary(text, summary, type, length);
+
+  summarizer.destroy();
+}
+
+// Show summary results
+function showSummaryResults(area: HTMLDivElement, summary: string, type: string) {
+  area.style.display = 'block';
+  
+  const typeEmojis: { [key: string]: string } = {
+    'key-points': '📌',
+    'tl;dr': '⚡',
+    'teaser': '🎯',
+    'headline': '📰'
+  };
+
+  area.innerHTML = `
+    <div style="
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+      border: 2px solid #8b5cf6;
+      border-radius: 12px;
+      padding: 20px;
+    ">
+      <div style="font-size: 14px; font-weight: 700; color: #6b21a8; margin-bottom: 12px;">
+        ${typeEmojis[type] || '📝'} SUMMARY
+      </div>
+      <div style="font-size: 15px; color: #5b21b6; line-height: 1.8; white-space: pre-wrap;">
+        ${escapeHtml(summary)}
+      </div>
+    </div>
+  `;
+}
+
+// Show summary error
+function showSummaryError(area: HTMLDivElement, error: Error) {
+  area.style.display = 'block';
+  area.innerHTML = `
+    <div style="
+      background: #fef2f2;
+      border: 2px solid #ef4444;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    ">
+      <div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>
+      <div style="font-size: 16px; font-weight: 700; color: #991b1b; margin-bottom: 8px;">
+        Summarization Failed
+      </div>
+      <div style="font-size: 14px; color: #7f1d1d;">
+        ${escapeHtml(error.message)}
+      </div>
+    </div>
+  `;
+}
+
+// Store summary in local storage
+async function storeSummary(originalText: string, summary: string, type: string, length: string) {
+  try {
+    const result = await chrome.storage.local.get(['summaries']);
+    const summaries = result.summaries || [];
+    
+    summaries.unshift({
+      originalText: originalText.substring(0, 200),
+      summary: summary,
+      type: type,
+      length: length,
+      timestamp: Date.now()
+    });
+
+    // Keep only last 50 summaries
+    if (summaries.length > 50) {
+      summaries.splice(50);
+    }
+
+    await chrome.storage.local.set({ summaries });
+    console.log('Summary stored successfully');
+  } catch (error) {
+    console.error('Error storing summary:', error);
+  }
 }
 
 // Make element draggable
