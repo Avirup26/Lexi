@@ -731,9 +731,12 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
     z-index: 2147483647;
     min-width: 320px;
     max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     animation: lexiFadeIn 0.15s ease-out;
     transition: none;
+    cursor: move;
   `;
   
   const displayText = selectedText.length > 100 ? selectedText.substring(0, 100) + '...' : selectedText;
@@ -831,6 +834,9 @@ function showLexiOverlay(selectedText: string, mouseX: number, mouseY: number) {
   
   document.body.appendChild(overlay);
   currentOverlay = overlay;
+  
+  // Make overlay draggable
+  makeDraggable(overlay);
   
   // Wait for DOM to be ready, then attach event listeners
   setTimeout(() => {
@@ -1076,6 +1082,46 @@ function createTranslationWidget(text: string, translation: string) {
   setTimeout(() => {
     widget.remove();
   }, 10000);
+}
+
+// Make element draggable
+function makeDraggable(element: HTMLElement) {
+  let isDragging = false;
+  let currentX = 0;
+  let currentY = 0;
+  let initialX = 0;
+  let initialY = 0;
+
+  element.addEventListener('mousedown', (e) => {
+    // Only drag if clicking on the header area, not on buttons
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'BUTTON' || target.closest('button')) {
+      return;
+    }
+
+    isDragging = true;
+    initialX = e.clientX - currentX;
+    initialY = e.clientY - currentY;
+    element.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    e.preventDefault();
+    currentX = e.clientX - initialX;
+    currentY = e.clientY - initialY;
+
+    element.style.left = `${currentX}px`;
+    element.style.top = `${currentY}px`;
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      element.style.cursor = 'move';
+    }
+  });
 }
 
 export {};
