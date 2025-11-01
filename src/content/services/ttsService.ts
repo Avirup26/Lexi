@@ -7,31 +7,59 @@ export function speak(text: string, languageCode: string): void {
   try {
     // Check if speech synthesis is available
     if (!('speechSynthesis' in window)) {
-      console.warn('Text-to-speech not supported');
+      alert('Text-to-speech not supported in your browser');
       return;
     }
 
     // Stop any ongoing speech
     stopSpeaking();
 
-    // Create utterance
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = languageCode;
-    utterance.rate = 0.9; // Slightly slower for language learning
-    utterance.pitch = 1.0;
-
-    // Try to find a voice for the language
-    const voices = window.speechSynthesis.getVoices();
-    const matchingVoice = voices.find(voice => voice.lang.startsWith(languageCode));
+    // Wait for voices to load
+    let voices = window.speechSynthesis.getVoices();
     
-    if (matchingVoice) {
-      utterance.voice = matchingVoice;
-    }
+    const speakWithVoice = () => {
+      // Create utterance
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = languageCode;
+      utterance.rate = 0.85; // Slightly slower for language learning
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
 
-    // Speak
-    window.speechSynthesis.speak(utterance);
+      // Try to find a voice for the language
+      voices = window.speechSynthesis.getVoices();
+      const matchingVoice = voices.find(voice => 
+        voice.lang.startsWith(languageCode) || 
+        voice.lang.startsWith(languageCode.split('-')[0])
+      );
+      
+      if (matchingVoice) {
+        utterance.voice = matchingVoice;
+      }
+
+      // Add event listeners
+      utterance.onend = () => {
+        console.log('Speech finished');
+      };
+      
+      utterance.onerror = (event) => {
+        console.error('Speech error:', event);
+      };
+
+      // Speak
+      window.speechSynthesis.speak(utterance);
+    };
+
+    // If voices aren't loaded yet, wait for them
+    if (voices.length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', speakWithVoice, { once: true });
+      // Timeout fallback
+      setTimeout(speakWithVoice, 100);
+    } else {
+      speakWithVoice();
+    }
   } catch (error) {
     console.error('Text-to-speech error:', error);
+    alert('Failed to speak text');
   }
 }
 

@@ -6,34 +6,42 @@
 export async function rewriteText(text: string, style?: string): Promise<string> {
   try {
     // Check if Rewriter API is available
-    if (!(self as any).ai || !(self as any).ai.rewriter) {
+    if (!('Rewriter' in self)) {
       throw new Error('Rewriter API not available');
     }
 
     // Check availability
-    const availability = await (self as any).ai.rewriter.capabilities();
-    if (availability.available !== 'readily' && availability.available !== 'available') {
-      throw new Error(`Rewriter not ready. Status: ${availability.available}`);
+    const availability = await (self as any).Rewriter.availability();
+    
+    console.log('[Lexi] Rewriter availability:', availability);
+    
+    if (availability === 'no') {
+      throw new Error('Rewriter API not supported on this device');
     }
 
     // Create rewriter instance
-    const options: any = {};
-    if (style) {
-      options.tone = style;
-    }
+    const options: any = {
+      sharedContext: 'Language learning context',
+      tone: style || 'as-is',
+      format: 'plain-text',
+      length: 'as-is',
+    };
 
-    const rewriter = await (self as any).ai.rewriter.create(options);
+    const rewriter = await (self as any).Rewriter.create(options);
 
     // Rewrite the text
     const result = await rewriter.rewrite(text);
 
     // Clean up
-    rewriter.destroy?.();
+    if (rewriter.destroy) {
+      rewriter.destroy();
+    }
 
-    return result;
+    return result || text;
   } catch (error) {
-    console.error('Rewrite error:', error);
-    throw error;
+    console.error('[Lexi] Rewrite error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Rewrite failed';
+    throw new Error(errorMsg);
   }
 }
 

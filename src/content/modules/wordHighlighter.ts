@@ -11,21 +11,39 @@ let isHighlighting = false;
  * Initialize word highlighter
  */
 export function initializeHighlighter(): void {
-  // Listen for immersive mode changes
-  document.addEventListener('immersive-mode-changed', (e: Event) => {
+  // Listen for immersive mode toggle
+  document.addEventListener('immersive-mode-toggled', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.enabled) {
+      console.log('[Lexi Highlighter] Starting highlighting, level:', customEvent.detail.level);
       highlightWords(customEvent.detail.level);
       startObserving();
     } else {
+      console.log('[Lexi Highlighter] Removing highlights');
       removeAllHighlights();
       stopObserving();
     }
   });
 
+  // Listen for highlight-words event (direct trigger)
+  document.addEventListener('highlight-words', (e: Event) => {
+    const customEvent = e as CustomEvent;
+    console.log('[Lexi Highlighter] Highlight words, level:', customEvent.detail.level);
+    removeAllHighlights();
+    highlightWords(customEvent.detail.level);
+  });
+
+  // Listen for remove highlights
+  document.addEventListener('remove-highlights', () => {
+    console.log('[Lexi Highlighter] Remove all highlights');
+    removeAllHighlights();
+    stopObserving();
+  });
+
   // Listen for level changes
   document.addEventListener('reading-level-changed', (e: Event) => {
     const customEvent = e as CustomEvent;
+    console.log('[Lexi Highlighter] Level changed to:', customEvent.detail.level);
     removeAllHighlights();
     highlightWords(customEvent.detail.level);
   });
@@ -41,14 +59,18 @@ export function highlightWords(level: 'beginner' | 'intermediate' | 'advanced'):
   try {
     // Find main content areas
     const contentAreas = getContentAreas();
+    console.log('[Lexi Highlighter] Found', contentAreas.length, 'content areas');
 
     for (const area of contentAreas) {
       const textNodes = findTextNodes(area);
+      console.log('[Lexi Highlighter] Found', textNodes.length, 'text nodes in area');
 
       for (const textNode of textNodes) {
         highlightTextNode(textNode, level);
       }
     }
+    
+    console.log('[Lexi Highlighter] Highlighting complete for level:', level);
   } finally {
     isHighlighting = false;
   }

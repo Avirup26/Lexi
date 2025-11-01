@@ -206,11 +206,18 @@ async function handleTranslate(): Promise<void> {
   resultDiv.innerHTML = '<div class="lexi-selection-loading">Translating...</div>';
 
   try {
+    console.log('[Lexi] Starting translation...');
+    console.log('[Lexi] Translation API available:', !!(self as any).translation);
+    
     const settings = await chrome.storage.local.get(['settings']);
     const sourceLang = settings?.settings?.nativeLanguage || 'en';
     const targetLang = settings?.settings?.targetLanguage || 'es';
+    
+    console.log('[Lexi] Source:', sourceLang, 'Target:', targetLang);
+    console.log('[Lexi] Text:', selectedText);
 
     const translation = await translateText(selectedText, sourceLang, targetLang);
+    console.log('[Lexi] Translation result:', translation);
 
     resultDiv.innerHTML = `
       <div class="lexi-selection-translation">
@@ -234,7 +241,13 @@ async function handleTranslate(): Promise<void> {
     });
 
   } catch (error) {
-    resultDiv.innerHTML = '<div class="lexi-selection-error">Translation unavailable</div>';
+    const errorMsg = error instanceof Error ? error.message : 'Translation unavailable';
+    resultDiv.innerHTML = `
+      <div class="lexi-selection-error">
+        <div style="font-weight: 600; margin-bottom: 4px;">❌ Translation Failed</div>
+        <div style="font-size: 11px;">${escapeHtml(errorMsg)}</div>
+      </div>
+    `;
   }
 }
 
@@ -263,7 +276,12 @@ async function handleRewrite(): Promise<void> {
   resultDiv.innerHTML = '<div class="lexi-selection-loading">Rewriting...</div>';
 
   try {
+    console.log('[Lexi] Starting rewrite...');
+    console.log('[Lexi] Rewriter API available:', !!((self as any).ai?.rewriter));
+    console.log('[Lexi] Text:', selectedText);
+    
     const rewritten = await rewriteText(selectedText);
+    console.log('[Lexi] Rewrite result:', rewritten);
 
     resultDiv.innerHTML = `
       <div class="lexi-selection-rewrite">
@@ -301,7 +319,14 @@ async function handleRewrite(): Promise<void> {
     });
 
   } catch (error) {
-    resultDiv.innerHTML = '<div class="lexi-selection-error">Rewrite unavailable</div>';
+    const errorMsg = error instanceof Error ? error.message : 'Rewrite unavailable';
+    resultDiv.innerHTML = `
+      <div class="lexi-selection-error">
+        <div style="font-weight: 600; margin-bottom: 4px;">❌ Rewrite Failed</div>
+        <div style="font-size: 11px;">${escapeHtml(errorMsg)}</div>
+        <div style="font-size: 10px; margin-top: 4px; opacity: 0.8;">Try enabling chrome://flags/#rewriter-api</div>
+      </div>
+    `;
   }
 }
 

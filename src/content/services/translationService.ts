@@ -11,23 +11,45 @@ export async function translateText(
   targetLang: string
 ): Promise<string> {
   try {
-    // Check if Translation API is available
-    if (!('translation' in self)) {
-      throw new Error('Translation API not available');
+    // Check if Translator API is available
+    if (!('Translator' in self)) {
+      throw new Error('Translator API not available');
     }
 
-    const translator = await (self as any).translation.createTranslator({
+    // Check if same language
+    if (sourceLang === targetLang) {
+      return text;
+    }
+
+    // Check availability
+    const translatorCapabilities = await (self as any).Translator.availability({
+      sourceLanguage: sourceLang,
+      targetLanguage: targetLang,
+    });
+
+    console.log('[Lexi] Translator capability:', translatorCapabilities);
+
+    if (translatorCapabilities === 'no') {
+      throw new Error(`Translation from ${sourceLang} to ${targetLang} not supported`);
+    }
+
+    // Create translator
+    const translator = await (self as any).Translator.create({
       sourceLanguage: sourceLang,
       targetLanguage: targetLang,
     });
 
     const result = await translator.translate(text);
-    translator.destroy?.();
     
-    return result;
+    if (translator.destroy) {
+      translator.destroy();
+    }
+    
+    return result || text;
   } catch (error) {
-    console.error('Translation error:', error);
-    throw error;
+    console.error('[Lexi] Translation error:', error);
+    const errorMsg = error instanceof Error ? error.message : 'Translation failed';
+    throw new Error(errorMsg);
   }
 }
 

@@ -7,7 +7,6 @@ import { initializeWordCard } from './modules/wordCard';
 import { initializeArticleDetector } from './modules/articleDetector';
 import { initializePracticeFlow } from './modules/practiceFlow';
 import { initializeSummaryModal } from './modules/summaryModal';
-import { initializeSelectionWidget } from './modules/selectionWidget';
 
 console.log('📚 Lexi content script loaded');
 
@@ -23,7 +22,6 @@ function initialize(): void {
   initializeArticleDetector();
   initializePracticeFlow();
   initializeSummaryModal();
-  initializeSelectionWidget();
 
   // Setup cross-module event coordination
   setupEventCoordination();
