@@ -1,26 +1,11 @@
-/* Content script styles for Lexi */
+/* Content Script Styles for Lexi - Modular Architecture */
 
-#lexi-translation-widget {
-  animation: slideIn 0.3s ease-out;
-}
+/* All styles are now injected via JavaScript in src/content/index.ts */
+/* This file is kept minimal as it's referenced in manifest.json */
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Highlight selected text that can be translated */
-.lexi-selectable {
-  cursor: pointer;
-  position: relative;
-}
-
-.lexi-selectable:hover {
-  background-color: rgba(14, 165, 233, 0.1);
+/* Base reset for Lexi elements */
+[class^="lexi-"],
+[id^="lexi-"] {
+  all: initial;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }

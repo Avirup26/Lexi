@@ -33,7 +33,7 @@ export default defineConfig({
         dashboard: resolve(__dirname, 'dashboard.html'),
         options: resolve(__dirname, 'options.html'),
         background: resolve(__dirname, 'src/background/background.ts'),
-        content: resolve(__dirname, 'src/content/content.ts'),
+        content: resolve(__dirname, 'src/content/index.ts'),
       },
       output: {
         entryFileNames: (chunkInfo) => {
