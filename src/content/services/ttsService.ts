@@ -1,54 +1,79 @@
 // Text-to-Speech Service - Wrapper for Web Speech API
 
+// Map language codes to proper locale codes
+const LANGUAGE_LOCALE_MAP: Record<string, string> = {
+  'en': 'en-US',
+  'es': 'es-ES',
+  'fr': 'fr-FR',
+  'de': 'de-DE',
+  'it': 'it-IT',
+  'pt': 'pt-BR',
+  'zh': 'zh-CN',
+  'ja': 'ja-JP',
+  'ko': 'ko-KR',
+  'ar': 'ar-SA',
+  'hi': 'hi-IN'
+};
+
 // Speak text in specified language
 export function speak(text: string, languageCode: string): void {
   try {
-    // Check if speech synthesis is available
     if (!('speechSynthesis' in window)) {
       alert('Text-to-speech not supported in your browser');
       return;
     }
 
-    // Stop any ongoing speech
     stopSpeaking();
 
-    // Wait for voices to load
     let voices = window.speechSynthesis.getVoices();
     
     const speakWithVoice = () => {
-      // Create utterance
+      voices = window.speechSynthesis.getVoices();
+      
+      const fullLocale = LANGUAGE_LOCALE_MAP[languageCode] || languageCode;
+      const langPrefix = languageCode.split('-')[0];
+      
+      // Find best matching voice - prefer exact locale match, then language match
+      let matchingVoice = voices.find(voice => 
+        voice.lang.toLowerCase() === fullLocale.toLowerCase()
+      );
+      
+      if (!matchingVoice) {
+        matchingVoice = voices.find(voice => 
+          voice.lang.toLowerCase().startsWith(langPrefix.toLowerCase())
+        );
+      }
+      
+      // Filter out English accents for non-English languages
+      if (languageCode !== 'en' && matchingVoice) {
+        const nativeVoices = voices.filter(voice => 
+          voice.lang.toLowerCase().startsWith(langPrefix.toLowerCase()) &&
+          !voice.name.toLowerCase().includes('english')
+        );
+        
+        if (nativeVoices.length > 0) {
+          matchingVoice = nativeVoices[0];
+        }
+      }
+      
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = languageCode;
-      utterance.rate = 0.85; // Slightly slower for language learning
+      utterance.lang = fullLocale;
+      utterance.rate = 0.85;
       utterance.pitch = 1.0;
       utterance.volume = 1.0;
-
-      // Try to find a voice for the language
-      voices = window.speechSynthesis.getVoices();
-      const matchingVoice = voices.find(voice => 
-        voice.lang.startsWith(languageCode) || 
-        voice.lang.startsWith(languageCode.split('-')[0])
-      );
       
       if (matchingVoice) {
         utterance.voice = matchingVoice;
       }
 
-      // Add event listeners
-      utterance.onend = () => {
-      };
-      
-      utterance.onerror = () => {
-      };
+      utterance.onend = () => {};
+      utterance.onerror = () => {};
 
-      // Speak
       window.speechSynthesis.speak(utterance);
     };
 
-    // If voices aren't loaded yet, wait for them
     if (voices.length === 0) {
       window.speechSynthesis.addEventListener('voiceschanged', speakWithVoice, { once: true });
-      // Timeout fallback
       setTimeout(speakWithVoice, 100);
     } else {
       speakWithVoice();
