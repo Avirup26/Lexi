@@ -668,6 +668,7 @@ async function handleSpeakNative(): Promise<void> {
 // Speak target language
 async function handleSpeakTarget(): Promise<void> {
   const input = document.getElementById('lexi-selection-input') as HTMLTextAreaElement;
+  const speakTargetBtn = document.getElementById('lexi-speak-target-btn') as HTMLButtonElement;
   
   if (!input) return;
   
@@ -679,10 +680,31 @@ async function handleSpeakTarget(): Promise<void> {
   
   try {
     const settings = await loadData<UserSettings>('settings');
-    const lang = settings?.targetLanguage || 'es';
-    speak(text, lang);
+    const sourceLang = settings?.nativeLanguage || 'en';
+    const targetLang = settings?.targetLanguage || 'es';
+    
+    if (speakTargetBtn) {
+      const originalText = speakTargetBtn.textContent;
+      speakTargetBtn.textContent = '⏳ Translating...';
+      speakTargetBtn.disabled = true;
+      
+      const translation = await translateText(text, sourceLang, targetLang);
+      
+      speak(translation, targetLang);
+      
+      speakTargetBtn.textContent = originalText;
+      speakTargetBtn.disabled = false;
+    } else {
+      const translation = await translateText(text, sourceLang, targetLang);
+      speak(translation, targetLang);
+    }
   } catch (error) {
-    alert('Failed to speak text');
+    if (speakTargetBtn) {
+      const lang = (await loadData<UserSettings>('settings'))?.targetLanguage || 'es';
+      speakTargetBtn.textContent = `🔊 ${lang.toUpperCase()}`;
+      speakTargetBtn.disabled = false;
+    }
+    alert('Failed to translate and speak text');
   }
 }
 
