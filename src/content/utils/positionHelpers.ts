@@ -1,8 +1,6 @@
 // Position Helpers - Calculate optimal positions for UI elements
 
-/**
- * Get optimal tooltip position near target element
- */
+// Get optimal tooltip position near target element
 export function getOptimalTooltipPosition(
   targetRect: DOMRect,
   tooltipWidth: number = 250,
@@ -51,9 +49,7 @@ export function getOptimalTooltipPosition(
   return { x, y, placement: 'left' };
 }
 
-/**
- * Get optimal modal position (centered with scroll offset)
- */
+// Get optimal modal position (centered with scroll offset)
 export function getOptimalModalPosition(
   modalWidth: number = 600,
   modalHeight: number = 400
@@ -68,9 +64,7 @@ export function getOptimalModalPosition(
   return { x: Math.max(0, x), y: Math.max(scrollY, y) };
 }
 
-/**
- * Avoid screen edges
- */
+// Avoid screen edges
 export function avoidScreenEdges(
   x: number,
   y: number,
@@ -96,9 +90,7 @@ export function avoidScreenEdges(
   return { x: clampedX, y: clampedY };
 }
 
-/**
- * Check if element is in viewport
- */
+// Check if element is in viewport
 export function isInViewport(rect: DOMRect): boolean {
   return (
     rect.top >= 0 &&
@@ -108,9 +100,7 @@ export function isInViewport(rect: DOMRect): boolean {
   );
 }
 
-/**
- * Get scroll offset
- */
+// Get scroll offset
 export function getScrollOffset(): { x: number; y: number } {
   return {
     x: window.scrollX || window.pageXOffset,
@@ -118,9 +108,7 @@ export function getScrollOffset(): { x: number; y: number } {
   };
 }
 
-/**
- * Calculate arrow position for tooltip
- */
+// Calculate arrow position for tooltip
 export function calculateArrowPosition(
   placement: 'top' | 'bottom' | 'left' | 'right',
   tooltipRect: DOMRect,

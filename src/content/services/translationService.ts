@@ -2,9 +2,7 @@
 
 import type { TranslationResult } from '../types';
 
-/**
- * Translate text using Chrome's Translation API
- */
+// Translate text using Chrome's Translation API
 export async function translateText(
   text: string,
   sourceLang: string,
@@ -27,7 +25,6 @@ export async function translateText(
       targetLanguage: targetLang,
     });
 
-    console.log('[Lexi] Translator capability:', translatorCapabilities);
 
     if (translatorCapabilities === 'no') {
       throw new Error(`Translation from ${sourceLang} to ${targetLang} not supported`);
@@ -47,15 +44,12 @@ export async function translateText(
     
     return result || text;
   } catch (error) {
-    console.error('[Lexi] Translation error:', error);
     const errorMsg = error instanceof Error ? error.message : 'Translation failed';
     throw new Error(errorMsg);
   }
 }
 
-/**
- * Detect language of text
- */
+// Detect language of text
 export async function detectLanguage(text: string): Promise<string> {
   try {
     // Use language detection if available
@@ -67,14 +61,11 @@ export async function detectLanguage(text: string): Promise<string> {
     // Fallback: assume English
     return 'en';
   } catch (error) {
-    console.error('Language detection error:', error);
     return 'en';
   }
 }
 
-/**
- * Check if Translation API is available
- */
+// Check if Translation API is available
 export async function isTranslationAvailable(): Promise<boolean> {
   try {
     if (!('translation' in self)) {
@@ -96,9 +87,7 @@ export async function isTranslationAvailable(): Promise<boolean> {
   }
 }
 
-/**
- * Translate and return full result object
- */
+// Translate and return full result object
 export async function translateWithMetadata(
   text: string,
   sourceLang: string,

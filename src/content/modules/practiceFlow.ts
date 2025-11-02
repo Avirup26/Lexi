@@ -11,9 +11,7 @@ let practiceModal: HTMLElement | null = null;
 let practiceWords: Array<{ word: string; translation: string; sourceLang: string; targetLang: string }> = [];
 let currentWordIndex = 0;
 
-/**
- * Initialize practice flow
- */
+// Initialize practice flow
 export function initializePracticeFlow(): void {
   // Listen for article completion
   document.addEventListener('article-read-complete', handleArticleComplete);
@@ -27,9 +25,7 @@ export function initializePracticeFlow(): void {
   });
 }
 
-/**
- * Handle article reading completion
- */
+// Handle article reading completion
 async function handleArticleComplete(event: Event): Promise<void> {
   const customEvent = event as CustomEvent;
   const wordsLookedUp = customEvent.detail.articleData?.wordsLookedUp || [];
@@ -45,9 +41,7 @@ async function handleArticleComplete(event: Event): Promise<void> {
   }, 2000);
 }
 
-/**
- * Show practice prompt
- */
+// Show practice prompt
 function showPracticePrompt(wordCount: number): void {
   const prompt = createElement('div', 'lexi-practice-prompt');
   
@@ -98,9 +92,7 @@ function showPracticePrompt(wordCount: number): void {
   }, 10000);
 }
 
-/**
- * Apply prompt styles
- */
+// Apply prompt styles
 function applyPromptStyles(prompt: HTMLElement): void {
   const styles = `
     position: fixed;
@@ -117,9 +109,7 @@ function applyPromptStyles(prompt: HTMLElement): void {
   prompt.style.cssText = styles;
 }
 
-/**
- * Start practice session
- */
+// Start practice session
 export function startPractice(words: Array<{ word: string; translation: string; sourceLang: string; targetLang: string }>): void {
   practiceWords = words.slice(0, 5); // Max 5 words
   currentWordIndex = 0;
@@ -128,9 +118,7 @@ export function startPractice(words: Array<{ word: string; translation: string; 
   showWordPractice();
 }
 
-/**
- * Create practice modal
- */
+// Create practice modal
 function createPracticeModal(): void {
   practiceModal = createElement('div', 'lexi-practice-modal');
   
@@ -162,9 +150,7 @@ function createPracticeModal(): void {
   overlay?.addEventListener('click', closePractice);
 }
 
-/**
- * Apply modal styles
- */
+// Apply modal styles
 function applyModalStyles(modal: HTMLElement): void {
   const styles = `
     position: fixed;
@@ -181,9 +167,7 @@ function applyModalStyles(modal: HTMLElement): void {
   modal.style.cssText = styles;
 }
 
-/**
- * Show word practice
- */
+// Show word practice
 function showWordPractice(): void {
   if (!practiceModal || currentWordIndex >= practiceWords.length) {
     showCompletionScreen();
@@ -242,9 +226,7 @@ function showWordPractice(): void {
   }
 }
 
-/**
- * Update progress indicator
- */
+// Update progress indicator
 function updateProgress(): void {
   const progress = practiceModal?.querySelector('#lexi-practice-progress');
   if (progress) {
@@ -252,9 +234,7 @@ function updateProgress(): void {
   }
 }
 
-/**
- * Handle check grammar
- */
+// Handle check grammar
 async function handleCheckGrammar(): Promise<void> {
   const input = document.getElementById('lexi-practice-input') as HTMLTextAreaElement;
   const feedback = document.getElementById('lexi-practice-feedback');
@@ -302,9 +282,7 @@ async function handleCheckGrammar(): Promise<void> {
   }
 }
 
-/**
- * Handle rewrite
- */
+// Handle rewrite
 async function handleRewrite(): Promise<void> {
   const input = document.getElementById('lexi-practice-input') as HTMLTextAreaElement;
   const feedback = document.getElementById('lexi-practice-feedback');
@@ -332,9 +310,7 @@ async function handleRewrite(): Promise<void> {
   }
 }
 
-/**
- * Handle next word
- */
+// Handle next word
 async function handleNextWord(): Promise<void> {
   const word = practiceWords[currentWordIndex];
   await markPracticed(word.word);
@@ -343,9 +319,7 @@ async function handleNextWord(): Promise<void> {
   showWordPractice();
 }
 
-/**
- * Show completion screen
- */
+// Show completion screen
 async function showCompletionScreen(): Promise<void> {
   if (!practiceModal) return;
 
@@ -381,9 +355,7 @@ async function showCompletionScreen(): Promise<void> {
   }
 }
 
-/**
- * Close practice modal
- */
+// Close practice modal
 export function closePractice(): void {
   if (practiceModal) {
     practiceModal.style.opacity = '0';
@@ -396,9 +368,7 @@ export function closePractice(): void {
   }
 }
 
-/**
- * Escape HTML
- */
+// Escape HTML
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;

@@ -2,9 +2,7 @@
 
 import type { GrammarResult } from '../types';
 
-/**
- * Check grammar using Chrome's Proofreader API
- */
+// Check grammar using Chrome's Proofreader API
 export async function checkGrammar(text: string, language: string = 'en'): Promise<GrammarResult> {
   try {
     // Check if Proofreader API is available
@@ -35,14 +33,11 @@ export async function checkGrammar(text: string, language: string = 'en'): Promi
       correctedText: result.correctedText || text,
     };
   } catch (error) {
-    console.error('Grammar check error:', error);
     throw error;
   }
 }
 
-/**
- * Check if Proofreader API is available
- */
+// Check if Proofreader API is available
 export async function isProofreaderAvailable(): Promise<boolean> {
   try {
     if (!(self as any).Proofreader) {
@@ -56,9 +51,7 @@ export async function isProofreaderAvailable(): Promise<boolean> {
   }
 }
 
-/**
- * Get suggestion for correction
- */
+// Get suggestion for correction
 export function getCorrectionMessage(correction: any): string {
   if (correction.type === 'spelling') {
     return `Spelling: "${correction.original}" → "${correction.suggestion}"`;
@@ -68,9 +61,7 @@ export function getCorrectionMessage(correction: any): string {
   return correction.message || 'Suggestion available';
 }
 
-/**
- * Apply corrections to text
- */
+// Apply corrections to text
 export function applyCorrections(text: string, corrections: any[]): string {
   if (!corrections || corrections.length === 0) {
     return text;

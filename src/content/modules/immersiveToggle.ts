@@ -1,4 +1,4 @@
-// Immersive Toggle - Floating toggle button for immersive reading mode
+// Floating toggle UI
 
 import { loadData, saveData } from '../storage/storageManager';
 import { Z_INDEX, CLASS_NAMES } from '../utils/constants';
@@ -10,16 +10,12 @@ import type { UserSettings } from '../types';
 let toggleElement: HTMLElement | null = null;
 let isExpanded = true;
 
-/**
- * Initialize Lexi toggle
- */
+// Initialize toggle
 export function initializeImmersiveMode(): void {
   createToggle();
 }
 
-/**
- * Create toggle UI
- */
+// Create toggle UI
 function createToggle(): void {
   toggleElement = document.createElement('div');
   toggleElement.id = 'lexi-immersive-toggle';
@@ -306,7 +302,6 @@ function createToggle(): void {
   applyStyles();
   document.body.appendChild(toggleElement);
   
-  // Load saved language settings
   loadData<UserSettings>('settings').then(settings => {
     if (settings) {
       const nativeLang = document.getElementById('lexi-native-lang') as HTMLSelectElement;
@@ -328,9 +323,7 @@ function createToggle(): void {
   initializeLanguageLabels();
 }
 
-/**
- * Apply CSS styles
- */
+// Apply styles
 function applyStyles(): void {
   if (!toggleElement) return;
 
@@ -353,21 +346,16 @@ function applyStyles(): void {
   toggleElement.style.cssText = styles;
 }
 
-/**
- * Attach event listeners
- */
+// Attach listeners
 function attachEventListeners(): void {
   if (!toggleElement) return;
 
-  // Native language select
   const nativeLang = document.getElementById('lexi-native-lang');
   nativeLang?.addEventListener('change', handleNativeLanguageChange);
 
-  // Target language select
   const targetLang = document.getElementById('lexi-target-lang');
   targetLang?.addEventListener('change', handleTargetLanguageChange);
 
-  // Minimize button
   const minimizeBtn = document.getElementById('lexi-toggle-minimize');
   minimizeBtn?.addEventListener('click', handleMinimize);
   minimizeBtn?.addEventListener('mouseenter', function() {
@@ -377,7 +365,6 @@ function attachEventListeners(): void {
     (this as HTMLElement).style.background = 'rgba(255, 255, 255, 0.2)';
   });
 
-  // Summary button
   const summaryBtn = document.getElementById('lexi-summary-btn');
   summaryBtn?.addEventListener('click', handleSummaryClick);
   summaryBtn?.addEventListener('mouseenter', function() {
@@ -389,7 +376,6 @@ function attachEventListeners(): void {
     (this as HTMLElement).style.boxShadow = '0 2px 8px rgba(168, 85, 247, 0.3)';
   });
 
-  // Translate button
   const translateBtn = document.getElementById('lexi-translate-btn');
   translateBtn?.addEventListener('click', handleTranslate);
   translateBtn?.addEventListener('mouseenter', function() {
@@ -401,7 +387,6 @@ function attachEventListeners(): void {
     (this as HTMLElement).style.boxShadow = 'none';
   });
 
-  // Speak native button
   const speakNativeBtn = document.getElementById('lexi-speak-native-btn');
   if (speakNativeBtn) {
     speakNativeBtn.addEventListener('click', handleSpeakNative, { once: false });
@@ -415,7 +400,6 @@ function attachEventListeners(): void {
     });
   }
 
-  // Speak target button
   const speakTargetBtn = document.getElementById('lexi-speak-target-btn');
   if (speakTargetBtn) {
     speakTargetBtn.addEventListener('click', handleSpeakTarget, { once: false });
@@ -429,7 +413,6 @@ function attachEventListeners(): void {
     });
   }
 
-  // Rewrite button
   const rewriteBtn = document.getElementById('lexi-rewrite-btn');
   rewriteBtn?.addEventListener('click', handleRewrite);
   rewriteBtn?.addEventListener('mouseenter', function() {
@@ -442,66 +425,49 @@ function attachEventListeners(): void {
   });
 }
 
-/**
- * Handle native language change
- */
+// Update native language
 function handleNativeLanguageChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
   const nativeLanguage = target.value;
   
-  console.log('[Lexi] Native language changed to:', nativeLanguage);
-  
-  // Save to storage
   saveData('settings', { nativeLanguage });
   
-  // Update speak button label
   const speakNativeBtn = document.getElementById('lexi-speak-native-btn');
   if (speakNativeBtn) {
     speakNativeBtn.textContent = `🔊 ${nativeLanguage.toUpperCase()}`;
   }
 }
 
-/**
- * Handle target language change
- */
+// Update target language
 function handleTargetLanguageChange(event: Event): void {
   const target = event.target as HTMLSelectElement;
   const targetLanguage = target.value;
   
-  console.log('[Lexi] Target language changed to:', targetLanguage);
-  
-  // Save to storage
   saveData('settings', { targetLanguage });
   
-  // Update speak button label
   const speakTargetBtn = document.getElementById('lexi-speak-target-btn');
   if (speakTargetBtn) {
     speakTargetBtn.textContent = `🔊 ${targetLanguage.toUpperCase()}`;
   }
 }
 
-/**
- * Initialize language labels on button load
- */
+// Init language labels
 async function initializeLanguageLabels(): Promise<void> {
   try {
     const settings = await loadData<UserSettings>('settings');
     const nativeLang = settings?.nativeLanguage || 'en';
     const targetLang = settings?.targetLanguage || 'es';
     
-    // Update native language dropdown
     const nativeLangSelect = document.getElementById('lexi-native-lang') as HTMLSelectElement;
     if (nativeLangSelect) {
       nativeLangSelect.value = nativeLang;
     }
     
-    // Update target language dropdown
     const targetLangSelect = document.getElementById('lexi-target-lang') as HTMLSelectElement;
     if (targetLangSelect) {
       targetLangSelect.value = targetLang;
     }
     
-    // Update speak button labels
     const speakNativeBtn = document.getElementById('lexi-speak-native-btn');
     if (speakNativeBtn) {
       speakNativeBtn.textContent = `🔊 ${nativeLang.toUpperCase()}`;
@@ -511,14 +477,10 @@ async function initializeLanguageLabels(): Promise<void> {
     if (speakTargetBtn) {
       speakTargetBtn.textContent = `🔊 ${targetLang.toUpperCase()}`;
     }
-  } catch (error) {
-    console.error('[Lexi] Failed to initialize language labels:', error);
-  }
+  } catch (error) { }
 }
 
-/**
- * Handle minimize button
- */
+// Toggle minimize
 function handleMinimize(): void {
   isExpanded = !isExpanded;
   const content = document.getElementById('lexi-toggle-content');
@@ -527,7 +489,6 @@ function handleMinimize(): void {
   
   if (content && minimizeBtn && toggleElement) {
     if (isExpanded) {
-      // Expanded state
       content.style.display = 'block';
       minimizeBtn.textContent = '−';
       toggleElement.style.width = '380px';
@@ -537,7 +498,6 @@ function handleMinimize(): void {
         header.style.borderRadius = '12px 12px 0 0';
       }
     } else {
-      // Minimized/collapsed state - just show compact header
       content.style.display = 'none';
       minimizeBtn.textContent = '+';
       toggleElement.style.width = '180px';
@@ -550,16 +510,12 @@ function handleMinimize(): void {
   }
 }
 
-/**
- * Handle summary button click
- */
+// Open summary modal
 function handleSummaryClick(): void {
   document.dispatchEvent(new CustomEvent('open-summary-modal'));
 }
 
-/**
- * Make toggle draggable (only when expanded)
- */
+// Make draggable
 function makeDraggable(): void {
   if (!toggleElement) return;
 
@@ -573,7 +529,6 @@ function makeDraggable(): void {
   if (!header) return;
 
   header.addEventListener('mousedown', (e: MouseEvent) => {
-    // Only allow dragging when expanded
     if (!isExpanded) return;
     
     isDragging = true;
@@ -601,9 +556,7 @@ function makeDraggable(): void {
   });
 }
 
-/**
- * Make toggle resizable
- */
+// Make resizable
 function makeResizable(): void {
   if (!toggleElement) return;
 
@@ -647,27 +600,21 @@ function makeResizable(): void {
   });
 }
 
-/**
- * Show toggle
- */
+// Show toggle
 export function showToggle(): void {
   if (toggleElement) {
     toggleElement.style.display = 'block';
   }
 }
 
-/**
- * Hide toggle
- */
+// Hide toggle
 export function hideToggle(): void {
   if (toggleElement) {
     toggleElement.style.display = 'none';
   }
 }
 
-/**
- * Handle translate button click
- */
+// Handle translate
 async function handleTranslate(): Promise<void> {
   const input = document.getElementById('lexi-selection-input') as HTMLTextAreaElement;
   const resultBox = document.getElementById('lexi-result-box') as HTMLElement;
@@ -685,7 +632,6 @@ async function handleTranslate(): Promise<void> {
   resultText.innerHTML = '<div style="text-align: center; color: #92400e;">Translating...</div>';
   
   try {
-    console.log('[Lexi] Translating:', text);
     const settings = await loadData<UserSettings>('settings');
     const sourceLang = settings?.nativeLanguage || 'en';
     const targetLang = settings?.targetLanguage || 'es';
@@ -698,9 +644,7 @@ async function handleTranslate(): Promise<void> {
   }
 }
 
-/**
- * Handle speak native button click
- */
+// Speak native language
 async function handleSpeakNative(): Promise<void> {
   const input = document.getElementById('lexi-selection-input') as HTMLTextAreaElement;
   
@@ -713,7 +657,6 @@ async function handleSpeakNative(): Promise<void> {
   }
   
   try {
-    console.log('[Lexi] Speaking (native):', text);
     const settings = await loadData<UserSettings>('settings');
     const lang = settings?.nativeLanguage || 'en';
     speak(text, lang);
@@ -722,9 +665,7 @@ async function handleSpeakNative(): Promise<void> {
   }
 }
 
-/**
- * Handle speak target button click
- */
+// Speak target language
 async function handleSpeakTarget(): Promise<void> {
   const input = document.getElementById('lexi-selection-input') as HTMLTextAreaElement;
   
@@ -737,7 +678,6 @@ async function handleSpeakTarget(): Promise<void> {
   }
   
   try {
-    console.log('[Lexi] Speaking (target):', text);
     const settings = await loadData<UserSettings>('settings');
     const lang = settings?.targetLanguage || 'es';
     speak(text, lang);
@@ -746,9 +686,7 @@ async function handleSpeakTarget(): Promise<void> {
   }
 }
 
-/**
- * Handle rewrite button click
- */
+// Handle rewrite
 async function handleRewrite(): Promise<void> {
   const input = document.getElementById('lexi-selection-input') as HTMLTextAreaElement;
   const resultBox = document.getElementById('lexi-result-box') as HTMLElement;
@@ -766,7 +704,6 @@ async function handleRewrite(): Promise<void> {
   resultText.innerHTML = '<div style="text-align: center; color: #92400e;">Rewriting...</div>';
   
   try {
-    console.log('[Lexi] Rewriting:', text);
     const rewritten = await rewriteText(text);
     resultText.innerHTML = `<strong style="color: #92400e;">Rewritten:</strong><br>${rewritten}`;
   } catch (error) {

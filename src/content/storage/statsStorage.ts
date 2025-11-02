@@ -13,17 +13,13 @@ const DEFAULT_STATS: LearningStats = {
   lastActiveDate: '',
 };
 
-/**
- * Get current stats
- */
+// Get current stats
 export async function getStats(): Promise<LearningStats> {
   const stats = await loadData<LearningStats>(STATS_KEY);
   return stats || { ...DEFAULT_STATS };
 }
 
-/**
- * Update stats
- */
+// Update stats
 export async function updateStats(updates: Partial<LearningStats>): Promise<LearningStats> {
   return await updateData<LearningStats>(STATS_KEY, (current) => {
     return {
@@ -33,9 +29,7 @@ export async function updateStats(updates: Partial<LearningStats>): Promise<Lear
   });
 }
 
-/**
- * Increment streak if user is active today
- */
+// Increment streak if user is active today
 export async function incrementStreak(): Promise<number> {
   const today = new Date().toISOString().split('T')[0];
   const stats = await getStats();
@@ -59,9 +53,7 @@ export async function incrementStreak(): Promise<number> {
   return newStreak;
 }
 
-/**
- * Reset streak
- */
+// Reset streak
 export async function resetStreak(): Promise<void> {
   await updateStats({
     currentStreak: 0,
@@ -69,9 +61,7 @@ export async function resetStreak(): Promise<void> {
   });
 }
 
-/**
- * Increment articles read
- */
+// Increment articles read
 export async function incrementArticlesRead(): Promise<void> {
   await updateData<LearningStats>(STATS_KEY, (current) => {
     const stats = current || DEFAULT_STATS;
@@ -83,9 +73,7 @@ export async function incrementArticlesRead(): Promise<void> {
   await incrementStreak();
 }
 
-/**
- * Increment words learned
- */
+// Increment words learned
 export async function incrementWordsLearned(count: number = 1): Promise<void> {
   await updateData<LearningStats>(STATS_KEY, (current) => {
     const stats = current || DEFAULT_STATS;
@@ -96,9 +84,7 @@ export async function incrementWordsLearned(count: number = 1): Promise<void> {
   });
 }
 
-/**
- * Increment practice sessions
- */
+// Increment practice sessions
 export async function incrementPracticeSessions(): Promise<void> {
   await updateData<LearningStats>(STATS_KEY, (current) => {
     const stats = current || DEFAULT_STATS;
@@ -110,9 +96,7 @@ export async function incrementPracticeSessions(): Promise<void> {
   await incrementStreak();
 }
 
-/**
- * Clear all stats
- */
+// Clear all stats
 export async function clearStats(): Promise<void> {
   await saveData(STATS_KEY, DEFAULT_STATS);
 }

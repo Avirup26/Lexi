@@ -1,8 +1,6 @@
 // DOM Helpers - Utility functions for DOM manipulation
 
-/**
- * Create element with class and content
- */
+// Create element with class and content
 export function createElement(
   tag: string,
   className?: string,
@@ -18,9 +16,7 @@ export function createElement(
   return element;
 }
 
-/**
- * Find all text nodes in element
- */
+// Find all text nodes in element
 export function findTextNodes(element: Element): Text[] {
   const textNodes: Text[] = [];
   const walker = document.createTreeWalker(
@@ -55,9 +51,7 @@ export function findTextNodes(element: Element): Text[] {
   return textNodes;
 }
 
-/**
- * Wrap word in text node with span
- */
+// Wrap word in text node with span
 export function wrapWord(
   textNode: Text,
   word: string,
@@ -105,16 +99,12 @@ export function wrapWord(
   textNode.parentNode?.replaceChild(fragment, textNode);
 }
 
-/**
- * Escape regex special characters
- */
+// Escape regex special characters
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/**
- * Remove all highlights
- */
+// Remove all highlights
 export function removeHighlights(className: string): void {
   const highlights = document.querySelectorAll(`.${className}`);
   highlights.forEach((highlight) => {
@@ -124,9 +114,7 @@ export function removeHighlights(className: string): void {
   });
 }
 
-/**
- * Check if element is visible
- */
+// Check if element is visible
 export function isElementVisible(element: Element): boolean {
   const rect = element.getBoundingClientRect();
   return (
@@ -137,9 +125,7 @@ export function isElementVisible(element: Element): boolean {
   );
 }
 
-/**
- * Get element position relative to viewport
- */
+// Get element position relative to viewport
 export function getElementPosition(element: Element): { x: number; y: number } {
   const rect = element.getBoundingClientRect();
   return {
@@ -148,9 +134,7 @@ export function getElementPosition(element: Element): { x: number; y: number } {
   };
 }
 
-/**
- * Append element with fade-in animation
- */
+// Append element with fade-in animation
 export function appendWithFadeIn(parent: Element, child: HTMLElement, duration: number = 300): void {
   child.style.opacity = '0';
   child.style.transition = `opacity ${duration}ms ease`;
@@ -161,9 +145,7 @@ export function appendWithFadeIn(parent: Element, child: HTMLElement, duration: 
   });
 }
 
-/**
- * Remove element with fade-out animation
- */
+// Remove element with fade-out animation
 export function removeWithFadeOut(element: HTMLElement, duration: number = 300): Promise<void> {
   return new Promise((resolve) => {
     element.style.transition = `opacity ${duration}ms ease`;

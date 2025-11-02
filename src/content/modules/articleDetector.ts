@@ -9,9 +9,7 @@ let hasDetectedCompletion = false;
 let scrollThreshold = 0.8; // 80% scrolled
 let scrollCheckInterval: number | null = null;
 
-/**
- * Initialize article detector
- */
+// Initialize article detector
 export function initializeArticleDetector(): void {
   // Start monitoring scroll
   startScrollMonitoring();
@@ -25,9 +23,7 @@ export function initializeArticleDetector(): void {
   });
 }
 
-/**
- * Start scroll monitoring
- */
+// Start scroll monitoring
 function startScrollMonitoring(): void {
   if (scrollCheckInterval) return;
 
@@ -37,16 +33,12 @@ function startScrollMonitoring(): void {
   scrollCheckInterval = window.setInterval(checkScrollPosition, 2000);
 }
 
-/**
- * Handle scroll event
- */
+// Handle scroll event
 function handleScroll(): void {
   checkScrollPosition();
 }
 
-/**
- * Check scroll position
- */
+// Check scroll position
 function checkScrollPosition(): void {
   if (hasDetectedCompletion) return;
 
@@ -59,14 +51,11 @@ function checkScrollPosition(): void {
   }
 }
 
-/**
- * Detect reading completion
- */
+// Detect reading completion
 export async function detectReadingCompletion(): Promise<void> {
   if (hasDetectedCompletion) return;
   hasDetectedCompletion = true;
 
-  console.log('📖 Article reading completed!');
 
   // Get article data
   const articleData = await gatherArticleData();
@@ -81,9 +70,7 @@ export async function detectReadingCompletion(): Promise<void> {
   }));
 }
 
-/**
- * Gather article data
- */
+// Gather article data
 async function gatherArticleData(): Promise<ArticleData> {
   const url = window.location.href;
   const title = getArticleTitle();
@@ -99,9 +86,7 @@ async function gatherArticleData(): Promise<ArticleData> {
   };
 }
 
-/**
- * Get article title
- */
+// Get article title
 function getArticleTitle(): string {
   // Try document title
   let title = document.title;
@@ -124,9 +109,7 @@ function getArticleTitle(): string {
   return title;
 }
 
-/**
- * Estimate word count
- */
+// Estimate word count
 function estimateWordCount(): number {
   // Get main content
   const article = document.querySelector('article') || document.querySelector('main');
@@ -137,16 +120,12 @@ function estimateWordCount(): number {
   return words.length;
 }
 
-/**
- * Reset detection (for new page or re-reading)
- */
+// Reset detection (for new page or re-reading)
 function resetDetection(): void {
   hasDetectedCompletion = false;
 }
 
-/**
- * Stop monitoring
- */
+// Stop monitoring
 export function stopMonitoring(): void {
   window.removeEventListener('scroll', handleScroll);
   if (scrollCheckInterval) {
@@ -155,9 +134,7 @@ export function stopMonitoring(): void {
   }
 }
 
-/**
- * Set scroll threshold
- */
+// Set scroll threshold
 export function setScrollThreshold(threshold: number): void {
   scrollThreshold = Math.max(0, Math.min(1, threshold));
 }

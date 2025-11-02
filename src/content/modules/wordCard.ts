@@ -12,17 +12,13 @@ import type { WordData } from '../types';
 let currentCard: HTMLElement | null = null;
 let currentOverlay: HTMLElement | null = null;
 
-/**
- * Initialize word card
- */
+// Initialize word card
 export function initializeWordCard(): void {
   document.addEventListener('click', handleClick);
   document.addEventListener('keydown', handleKeyDown);
 }
 
-/**
- * Handle click on highlighted word
- */
+// Handle click on highlighted word
 function handleClick(event: Event): void {
   const target = event.target as HTMLElement;
   
@@ -43,18 +39,14 @@ function handleClick(event: Event): void {
   }
 }
 
-/**
- * Handle keyboard
- */
+// Handle keyboard
 function handleKeyDown(event: KeyboardEvent): void {
   if (event.key === 'Escape' && currentCard) {
     hideWordCard();
   }
 }
 
-/**
- * Show word card modal
- */
+// Show word card modal
 export async function showWordCard(word: string): Promise<void> {
   try {
     // Get translation
@@ -86,13 +78,10 @@ export async function showWordCard(word: string): Promise<void> {
     });
 
   } catch (error) {
-    console.error('Error showing word card:', error);
   }
 }
 
-/**
- * Create overlay element
- */
+// Create overlay element
 function createOverlay(): HTMLElement {
   const overlay = createElement('div', 'lexi-card-overlay');
   overlay.style.cssText = `
@@ -112,9 +101,7 @@ function createOverlay(): HTMLElement {
   return overlay;
 }
 
-/**
- * Create card element
- */
+// Create card element
 function createCardElement(
   word: string,
   translation: string,
@@ -177,9 +164,7 @@ function createCardElement(
   return card;
 }
 
-/**
- * Apply card styles
- */
+// Apply card styles
 function applyCardStyles(card: HTMLElement): void {
   const styles = `
     position: fixed;
@@ -197,9 +182,7 @@ function applyCardStyles(card: HTMLElement): void {
   card.style.cssText = styles;
 }
 
-/**
- * Attach card event listeners
- */
+// Attach card event listeners
 function attachCardListeners(
   card: HTMLElement,
   word: string,
@@ -253,9 +236,7 @@ function attachCardListeners(
   });
 }
 
-/**
- * Handle practice button
- */
+// Handle practice button
 async function handlePractice(
   word: string,
   translation: string,
@@ -272,9 +253,7 @@ async function handlePractice(
   hideWordCard();
 }
 
-/**
- * Handle add to vocabulary
- */
+// Handle add to vocabulary
 async function handleAddToVocabulary(
   word: string,
   translation: string,
@@ -296,9 +275,7 @@ async function handleAddToVocabulary(
   await addWordToArticle(window.location.href, word);
 }
 
-/**
- * Hide word card
- */
+// Hide word card
 export function hideWordCard(): void {
   if (currentCard) {
     currentCard.style.opacity = '0';
@@ -315,9 +292,7 @@ export function hideWordCard(): void {
   }, ANIMATION.NORMAL);
 }
 
-/**
- * Generate example sentence
- */
+// Generate example sentence
 function generateExampleSentence(word: string): string {
   const templates = [
     `I use the word "${word}" in my daily conversations.`,
@@ -329,9 +304,7 @@ function generateExampleSentence(word: string): string {
   return templates[Math.floor(Math.random() * templates.length)];
 }
 
-/**
- * Get language code display
- */
+// Get language code display
 function getLangCode(lang: string): string {
   const codes: Record<string, string> = {
     'en': 'EN',
@@ -347,9 +320,7 @@ function getLangCode(lang: string): string {
   return codes[lang] || lang.toUpperCase();
 }
 
-/**
- * Escape HTML
- */
+// Escape HTML
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;

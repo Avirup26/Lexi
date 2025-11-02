@@ -14,17 +14,13 @@ let hoverTimeout: number | null = null;
 let hideTimeout: number | null = null;
 let currentWord: string | null = null;
 
-/**
- * Initialize hover tooltip
- */
+// Initialize hover tooltip
 export function initializeHoverTooltip(): void {
   document.addEventListener('mouseover', handleMouseOver);
   document.addEventListener('mouseout', handleMouseOut);
 }
 
-/**
- * Handle mouse over highlighted word
- */
+// Handle mouse over highlighted word
 function handleMouseOver(event: Event): void {
   const target = event.target as HTMLElement;
   
@@ -52,9 +48,7 @@ function handleMouseOver(event: Event): void {
   }, ANIMATION.TOOLTIP_DELAY);
 }
 
-/**
- * Handle mouse out
- */
+// Handle mouse out
 function handleMouseOut(event: Event): void {
   const target = event.target as HTMLElement;
   
@@ -74,9 +68,7 @@ function handleMouseOut(event: Event): void {
   }, ANIMATION.TOOLTIP_HIDE_DELAY);
 }
 
-/**
- * Show tooltip with translation
- */
+// Show tooltip with translation
 export async function showTooltip(word: string, targetElement: HTMLElement): Promise<void> {
   try {
     currentWord = word;
@@ -122,13 +114,10 @@ export async function showTooltip(word: string, targetElement: HTMLElement): Pro
     });
 
   } catch (error) {
-    console.error('Error showing tooltip:', error);
   }
 }
 
-/**
- * Create tooltip element
- */
+// Create tooltip element
 function createTooltipElement(
   word: string,
   translation: string,
@@ -161,9 +150,7 @@ function createTooltipElement(
   return tooltip;
 }
 
-/**
- * Apply tooltip styles
- */
+// Apply tooltip styles
 function applyTooltipStyles(tooltip: HTMLElement): void {
   const styles = `
     position: fixed;
@@ -181,9 +168,7 @@ function applyTooltipStyles(tooltip: HTMLElement): void {
   tooltip.style.cssText = styles;
 }
 
-/**
- * Attach event listeners to tooltip
- */
+// Attach event listeners to tooltip
 function attachTooltipListeners(
   tooltip: HTMLElement,
   word: string,
@@ -217,9 +202,7 @@ function attachTooltipListeners(
   });
 }
 
-/**
- * Handle add to vocabulary
- */
+// Handle add to vocabulary
 async function handleAddToVocabulary(
   word: string,
   translation: string,
@@ -241,9 +224,7 @@ async function handleAddToVocabulary(
   await addWordToArticle(window.location.href, word);
 }
 
-/**
- * Hide tooltip
- */
+// Hide tooltip
 export function hideTooltip(): void {
   if (currentTooltip) {
     currentTooltip.style.opacity = '0';
@@ -255,9 +236,7 @@ export function hideTooltip(): void {
   }
 }
 
-/**
- * Escape HTML
- */
+// Escape HTML
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;

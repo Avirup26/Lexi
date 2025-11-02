@@ -8,11 +8,8 @@ import { initializeArticleDetector } from './modules/articleDetector';
 import { initializePracticeFlow } from './modules/practiceFlow';
 import { initializeSummaryModal } from './modules/summaryModal';
 
-console.log('📚 Lexi content script loaded');
 
-/**
- * Initialize all modules
- */
+// Initialize all modules
 function initialize(): void {
   // Initialize core modules
   initializeImmersiveMode();
@@ -26,12 +23,9 @@ function initialize(): void {
   // Setup cross-module event coordination
   setupEventCoordination();
 
-  console.log('✅ Lexi initialized');
 }
 
-/**
- * Setup event coordination between modules
- */
+// Setup event coordination between modules
 function setupEventCoordination(): void {
   // Listen for immersive mode changes
   document.addEventListener('immersive-mode-changed', (e: Event) => {
@@ -54,9 +48,7 @@ function setupEventCoordination(): void {
   injectStyles();
 }
 
-/**
- * Inject CSS styles
- */
+// Inject CSS styles
 function injectStyles(): void {
   const style = document.createElement('style');
   style.id = 'lexi-styles';

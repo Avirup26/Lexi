@@ -7,19 +7,15 @@ import { CLASS_NAMES } from '../utils/constants';
 let observer: MutationObserver | null = null;
 let isHighlighting = false;
 
-/**
- * Initialize word highlighter
- */
+// Initialize word highlighter
 export function initializeHighlighter(): void {
   // Listen for immersive mode toggle
   document.addEventListener('immersive-mode-toggled', (e: Event) => {
     const customEvent = e as CustomEvent;
     if (customEvent.detail.enabled) {
-      console.log('[Lexi Highlighter] Starting highlighting, level:', customEvent.detail.level);
       highlightWords(customEvent.detail.level);
       startObserving();
     } else {
-      console.log('[Lexi Highlighter] Removing highlights');
       removeAllHighlights();
       stopObserving();
     }
@@ -28,14 +24,12 @@ export function initializeHighlighter(): void {
   // Listen for highlight-words event (direct trigger)
   document.addEventListener('highlight-words', (e: Event) => {
     const customEvent = e as CustomEvent;
-    console.log('[Lexi Highlighter] Highlight words, level:', customEvent.detail.level);
     removeAllHighlights();
     highlightWords(customEvent.detail.level);
   });
 
   // Listen for remove highlights
   document.addEventListener('remove-highlights', () => {
-    console.log('[Lexi Highlighter] Remove all highlights');
     removeAllHighlights();
     stopObserving();
   });
@@ -43,15 +37,12 @@ export function initializeHighlighter(): void {
   // Listen for level changes
   document.addEventListener('reading-level-changed', (e: Event) => {
     const customEvent = e as CustomEvent;
-    console.log('[Lexi Highlighter] Level changed to:', customEvent.detail.level);
     removeAllHighlights();
     highlightWords(customEvent.detail.level);
   });
 }
 
-/**
- * Highlight words based on reading level
- */
+// Highlight words based on reading level
 export function highlightWords(level: 'beginner' | 'intermediate' | 'advanced'): void {
   if (isHighlighting) return;
   isHighlighting = true;
@@ -59,26 +50,21 @@ export function highlightWords(level: 'beginner' | 'intermediate' | 'advanced'):
   try {
     // Find main content areas
     const contentAreas = getContentAreas();
-    console.log('[Lexi Highlighter] Found', contentAreas.length, 'content areas');
 
     for (const area of contentAreas) {
       const textNodes = findTextNodes(area);
-      console.log('[Lexi Highlighter] Found', textNodes.length, 'text nodes in area');
 
       for (const textNode of textNodes) {
         highlightTextNode(textNode, level);
       }
     }
     
-    console.log('[Lexi Highlighter] Highlighting complete for level:', level);
   } finally {
     isHighlighting = false;
   }
 }
 
-/**
- * Get main content areas (avoid nav, header, etc.)
- */
+// Get main content areas (avoid nav, header, etc.)
 function getContentAreas(): Element[] {
   const areas: Element[] = [];
 
@@ -111,9 +97,7 @@ function getContentAreas(): Element[] {
   return areas;
 }
 
-/**
- * Check if element is in excluded area
- */
+// Check if element is in excluded area
 function isInExcludedArea(element: Element): boolean {
   const excludedTags = ['nav', 'header', 'footer', 'aside', 'button', 'form'];
   
@@ -132,9 +116,7 @@ function isInExcludedArea(element: Element): boolean {
   return false;
 }
 
-/**
- * Highlight words in text node
- */
+// Highlight words in text node
 function highlightTextNode(
   textNode: Text,
   level: 'beginner' | 'intermediate' | 'advanced'
@@ -149,18 +131,14 @@ function highlightTextNode(
   }
 }
 
-/**
- * Extract unique words from text
- */
+// Extract unique words from text
 function extractUniqueWords(text: string): string[] {
   const words = text.match(/\b[a-zA-Z]{3,}\b/g) || [];
   const normalized = words.map(normalizeWord);
   return Array.from(new Set(normalized));
 }
 
-/**
- * Remove all highlights
- */
+// Remove all highlights
 export function removeAllHighlights(): void {
   removeHighlights(CLASS_NAMES.HIGHLIGHT);
   
@@ -168,9 +146,7 @@ export function removeAllHighlights(): void {
   normalizeTextNodes();
 }
 
-/**
- * Normalize text nodes (merge adjacent text nodes)
- */
+// Normalize text nodes (merge adjacent text nodes)
 function normalizeTextNodes(): void {
   const contentAreas = getContentAreas();
   for (const area of contentAreas) {
@@ -178,9 +154,7 @@ function normalizeTextNodes(): void {
   }
 }
 
-/**
- * Start observing DOM changes
- */
+// Start observing DOM changes
 function startObserving(): void {
   if (observer) return;
 
@@ -208,9 +182,7 @@ function startObserving(): void {
   });
 }
 
-/**
- * Stop observing DOM changes
- */
+// Stop observing DOM changes
 function stopObserving(): void {
   if (observer) {
     observer.disconnect();
@@ -218,9 +190,7 @@ function stopObserving(): void {
   }
 }
 
-/**
- * Get current reading level from toggle
- */
+// Get current reading level from toggle
 function getCurrentLevel(): 'beginner' | 'intermediate' | 'advanced' {
   // Try to get from select element
   const levelSelect = document.getElementById('lexi-level-select') as HTMLSelectElement;
@@ -230,18 +200,14 @@ function getCurrentLevel(): 'beginner' | 'intermediate' | 'advanced' {
   return 'beginner';
 }
 
-/**
- * Get all highlighted words on page
- */
+// Get all highlighted words on page
 export function getHighlightedWords(): string[] {
   const highlights = document.querySelectorAll(`.${CLASS_NAMES.HIGHLIGHT}`);
   const words = Array.from(highlights).map(el => el.textContent || '');
   return Array.from(new Set(words.map(normalizeWord)));
 }
 
-/**
- * Count highlighted words
- */
+// Count highlighted words
 export function countHighlightedWords(): number {
   return document.querySelectorAll(`.${CLASS_NAMES.HIGHLIGHT}`).length;
 }

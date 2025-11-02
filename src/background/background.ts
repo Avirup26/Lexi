@@ -1,10 +1,8 @@
 // Background service worker for Lexi
-console.log('Lexi background service worker started');
 
 // Initialize extension on install
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
-    console.log('Lexi installed for the first time');
     
     // Set default settings
     chrome.storage.local.set({
@@ -22,13 +20,11 @@ chrome.runtime.onInstalled.addListener((details) => {
     // Open welcome page
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
   } else if (details.reason === 'update') {
-    console.log('Lexi updated to version', chrome.runtime.getManifest().version);
   }
 });
 
 // Listen for messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background received message:', message);
   
   if (message.type === 'TEXT_SELECTED') {
     // Handle text selection from content script
@@ -55,7 +51,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 // Handle text selection
 async function handleTextSelection(text: string, tabId?: number) {
-  console.log('Text selected:', text);
   
   // Get user settings
   const { settings } = await chrome.storage.local.get(['settings']);
@@ -89,7 +84,6 @@ async function translateText(text: string, targetLang: string, sourceLang: strin
       throw new Error('Translation API not available');
     }
   } catch (error) {
-    console.error('Translation error:', error);
     return `Translation unavailable: ${error}`;
   }
 }

@@ -10,18 +10,14 @@ let selectionWidget: HTMLElement | null = null;
 let selectedText = '';
 let selectionRange: Range | null = null;
 
-/**
- * Initialize selection widget
- */
+// Initialize selection widget
 export function initializeSelectionWidget(): void {
   document.addEventListener('mouseup', handleMouseUp);
   document.addEventListener('keyup', handleKeyUp);
   document.addEventListener('mousedown', handleMouseDown);
 }
 
-/**
- * Handle mouse up (text selection)
- */
+// Handle mouse up (text selection)
 function handleMouseUp(event: MouseEvent): void {
   setTimeout(() => {
     const selection = window.getSelection();
@@ -48,9 +44,7 @@ function handleMouseUp(event: MouseEvent): void {
   }, 10);
 }
 
-/**
- * Handle key up (text selection via keyboard)
- */
+// Handle key up (text selection via keyboard)
 function handleKeyUp(event: KeyboardEvent): void {
   // Only check on shift key releases (common for selection)
   if (event.shiftKey || event.key === 'Shift') {
@@ -72,9 +66,7 @@ function handleKeyUp(event: KeyboardEvent): void {
   }
 }
 
-/**
- * Handle mouse down (hide widget when clicking outside)
- */
+// Handle mouse down (hide widget when clicking outside)
 function handleMouseDown(event: MouseEvent): void {
   const target = event.target as HTMLElement;
   if (selectionWidget && !target.closest('.lexi-selection-widget')) {
@@ -88,9 +80,7 @@ function handleMouseDown(event: MouseEvent): void {
   }
 }
 
-/**
- * Show selection widget at position
- */
+// Show selection widget at position
 function showSelectionWidget(x: number, y: number): void {
   if (selectionWidget) {
     hideSelectionWidget();
@@ -128,9 +118,7 @@ function showSelectionWidget(x: number, y: number): void {
   });
 }
 
-/**
- * Create selection widget element
- */
+// Create selection widget element
 function createSelectionWidget(): HTMLElement {
   const widget = createElement('div', 'lexi-selection-widget');
 
@@ -160,9 +148,7 @@ function createSelectionWidget(): HTMLElement {
   return widget;
 }
 
-/**
- * Apply widget styles
- */
+// Apply widget styles
 function applyWidgetStyles(widget: HTMLElement): void {
   const styles = `
     position: absolute;
@@ -180,9 +166,7 @@ function applyWidgetStyles(widget: HTMLElement): void {
   widget.style.cssText = styles;
 }
 
-/**
- * Attach event listeners to widget buttons
- */
+// Attach event listeners to widget buttons
 function attachWidgetListeners(widget: HTMLElement): void {
   const translateBtn = widget.querySelector('.lexi-selection-translate');
   const speakBtn = widget.querySelector('.lexi-selection-speak');
@@ -193,9 +177,7 @@ function attachWidgetListeners(widget: HTMLElement): void {
   rewriteBtn?.addEventListener('click', handleRewrite);
 }
 
-/**
- * Handle translate button
- */
+// Handle translate button
 async function handleTranslate(): Promise<void> {
   if (!selectedText || !selectionWidget) return;
 
@@ -206,18 +188,13 @@ async function handleTranslate(): Promise<void> {
   resultDiv.innerHTML = '<div class="lexi-selection-loading">Translating...</div>';
 
   try {
-    console.log('[Lexi] Starting translation...');
-    console.log('[Lexi] Translation API available:', !!(self as any).translation);
     
     const settings = await chrome.storage.local.get(['settings']);
     const sourceLang = settings?.settings?.nativeLanguage || 'en';
     const targetLang = settings?.settings?.targetLanguage || 'es';
     
-    console.log('[Lexi] Source:', sourceLang, 'Target:', targetLang);
-    console.log('[Lexi] Text:', selectedText);
 
     const translation = await translateText(selectedText, sourceLang, targetLang);
-    console.log('[Lexi] Translation result:', translation);
 
     resultDiv.innerHTML = `
       <div class="lexi-selection-translation">
@@ -251,9 +228,7 @@ async function handleTranslate(): Promise<void> {
   }
 }
 
-/**
- * Handle speak button
- */
+// Handle speak button
 async function handleSpeak(): Promise<void> {
   if (!selectedText) return;
 
@@ -263,9 +238,7 @@ async function handleSpeak(): Promise<void> {
   speak(selectedText, sourceLang);
 }
 
-/**
- * Handle rewrite button
- */
+// Handle rewrite button
 async function handleRewrite(): Promise<void> {
   if (!selectedText || !selectionWidget || !selectionRange) return;
 
@@ -276,12 +249,8 @@ async function handleRewrite(): Promise<void> {
   resultDiv.innerHTML = '<div class="lexi-selection-loading">Rewriting...</div>';
 
   try {
-    console.log('[Lexi] Starting rewrite...');
-    console.log('[Lexi] Rewriter API available:', !!((self as any).ai?.rewriter));
-    console.log('[Lexi] Text:', selectedText);
     
     const rewritten = await rewriteText(selectedText);
-    console.log('[Lexi] Rewrite result:', rewritten);
 
     resultDiv.innerHTML = `
       <div class="lexi-selection-rewrite">
@@ -330,9 +299,7 @@ async function handleRewrite(): Promise<void> {
   }
 }
 
-/**
- * Replace selected text with new text
- */
+// Replace selected text with new text
 function replaceSelectedText(newText: string): void {
   if (!selectionRange) return;
 
@@ -345,13 +312,10 @@ function replaceSelectedText(newText: string): void {
     const selection = window.getSelection();
     selection?.removeAllRanges();
   } catch (error) {
-    console.error('Error replacing text:', error);
   }
 }
 
-/**
- * Hide selection widget
- */
+// Hide selection widget
 export function hideSelectionWidget(): void {
   if (selectionWidget) {
     selectionWidget.style.opacity = '0';
@@ -365,9 +329,7 @@ export function hideSelectionWidget(): void {
   }
 }
 
-/**
- * Escape HTML
- */
+// Escape HTML
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;

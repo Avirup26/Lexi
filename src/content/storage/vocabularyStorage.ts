@@ -6,9 +6,7 @@ import type { WordData } from '../types';
 
 const VOCABULARY_KEY = 'vocabulary';
 
-/**
- * Add word to vocabulary
- */
+// Add word to vocabulary
 export async function addWord(wordData: WordData): Promise<void> {
   await updateData<WordData[]>(VOCABULARY_KEY, (current) => {
     const vocabulary = current || [];
@@ -40,17 +38,13 @@ export async function addWord(wordData: WordData): Promise<void> {
   });
 }
 
-/**
- * Get all vocabulary
- */
+// Get all vocabulary
 export async function getVocabulary(): Promise<WordData[]> {
   const vocabulary = await loadData<WordData[]>(VOCABULARY_KEY);
   return vocabulary || [];
 }
 
-/**
- * Mark word as practiced
- */
+// Mark word as practiced
 export async function markPracticed(word: string): Promise<void> {
   await updateData<WordData[]>(VOCABULARY_KEY, (current) => {
     const vocabulary = current || [];
@@ -67,9 +61,7 @@ export async function markPracticed(word: string): Promise<void> {
   });
 }
 
-/**
- * Increment review count for word
- */
+// Increment review count for word
 export async function incrementReviewCount(word: string): Promise<void> {
   await updateData<WordData[]>(VOCABULARY_KEY, (current) => {
     const vocabulary = current || [];
@@ -86,17 +78,13 @@ export async function incrementReviewCount(word: string): Promise<void> {
   });
 }
 
-/**
- * Get words that need practice
- */
+// Get words that need practice
 export async function getWordsToPractice(): Promise<WordData[]> {
   const vocabulary = await getVocabulary();
   return vocabulary.filter((word) => !word.practiced || word.reviewCount < 3);
 }
 
-/**
- * Delete word from vocabulary
- */
+// Delete word from vocabulary
 export async function deleteWord(word: string): Promise<void> {
   await updateData<WordData[]>(VOCABULARY_KEY, (current) => {
     const vocabulary = current || [];
@@ -106,16 +94,12 @@ export async function deleteWord(word: string): Promise<void> {
   });
 }
 
-/**
- * Clear all vocabulary
- */
+// Clear all vocabulary
 export async function clearVocabulary(): Promise<void> {
   await saveData(VOCABULARY_KEY, []);
 }
 
-/**
- * Get vocabulary count
- */
+// Get vocabulary count
 export async function getVocabularyCount(): Promise<number> {
   const vocabulary = await getVocabulary();
   return vocabulary.length;

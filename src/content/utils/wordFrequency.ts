@@ -28,9 +28,7 @@ export const INTERMEDIATE_WORDS = new Set([
   // Add more intermediate words...
 ]);
 
-/**
- * Get word difficulty level
- */
+// Get word difficulty level
 export function getWordDifficulty(word: string): 'beginner' | 'intermediate' | 'advanced' {
   const normalized = word.toLowerCase().trim();
 
@@ -45,9 +43,7 @@ export function getWordDifficulty(word: string): 'beginner' | 'intermediate' | '
   return 'advanced';
 }
 
-/**
- * Check if word should be highlighted based on user level
- */
+// Check if word should be highlighted based on user level
 export function shouldHighlight(word: string, userLevel: 'beginner' | 'intermediate' | 'advanced'): boolean {
   const difficulty = getWordDifficulty(word);
 
@@ -65,9 +61,7 @@ export function shouldHighlight(word: string, userLevel: 'beginner' | 'intermedi
   return false;
 }
 
-/**
- * Check if word is valid for highlighting
- */
+// Check if word is valid for highlighting
 export function isValidWord(word: string): boolean {
   // Must be at least 3 characters
   if (word.length < 3) {
@@ -92,9 +86,7 @@ export function isValidWord(word: string): boolean {
   return true;
 }
 
-/**
- * Clean word for comparison
- */
+// Clean word for comparison
 export function normalizeWord(word: string): string {
   return word
     .toLowerCase()
@@ -102,9 +94,7 @@ export function normalizeWord(word: string): string {
     .trim();
 }
 
-/**
- * Extract words from text
- */
+// Extract words from text
 export function extractWords(text: string): string[] {
   // Split on whitespace and punctuation
   const words = text.split(/\s+|[.,;:!?()[\]{}]/);

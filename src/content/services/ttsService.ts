@@ -1,8 +1,6 @@
 // Text-to-Speech Service - Wrapper for Web Speech API
 
-/**
- * Speak text in specified language
- */
+// Speak text in specified language
 export function speak(text: string, languageCode: string): void {
   try {
     // Check if speech synthesis is available
@@ -38,11 +36,9 @@ export function speak(text: string, languageCode: string): void {
 
       // Add event listeners
       utterance.onend = () => {
-        console.log('Speech finished');
       };
       
-      utterance.onerror = (event) => {
-        console.error('Speech error:', event);
+      utterance.onerror = () => {
       };
 
       // Speak
@@ -58,30 +54,23 @@ export function speak(text: string, languageCode: string): void {
       speakWithVoice();
     }
   } catch (error) {
-    console.error('Text-to-speech error:', error);
     alert('Failed to speak text');
   }
 }
 
-/**
- * Stop any ongoing speech
- */
+// Stop any ongoing speech
 export function stopSpeaking(): void {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel();
   }
 }
 
-/**
- * Check if TTS is available
- */
+// Check if TTS is available
 export function isTTSAvailable(): boolean {
   return 'speechSynthesis' in window;
 }
 
-/**
- * Get available voices for a language
- */
+// Get available voices for a language
 export function getVoicesForLanguage(languageCode: string): SpeechSynthesisVoice[] {
   if (!('speechSynthesis' in window)) {
     return [];
@@ -91,9 +80,7 @@ export function getVoicesForLanguage(languageCode: string): SpeechSynthesisVoice
   return voices.filter(voice => voice.lang.startsWith(languageCode));
 }
 
-/**
- * Initialize voices (needed on some browsers)
- */
+// Initialize voices (needed on some browsers)
 export function initializeVoices(): Promise<void> {
   return new Promise((resolve) => {
     if (!('speechSynthesis' in window)) {

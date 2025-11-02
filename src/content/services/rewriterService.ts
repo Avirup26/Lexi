@@ -1,8 +1,6 @@
 // Rewriter Service - Wrapper for Chrome Rewriter API
 
-/**
- * Rewrite text using Chrome's Rewriter API
- */
+// Rewrite text using Chrome's Rewriter API
 export async function rewriteText(text: string, style?: string): Promise<string> {
   try {
     // Check if Rewriter API is available
@@ -13,7 +11,6 @@ export async function rewriteText(text: string, style?: string): Promise<string>
     // Check availability
     const availability = await (self as any).Rewriter.availability();
     
-    console.log('[Lexi] Rewriter availability:', availability);
     
     if (availability === 'no') {
       throw new Error('Rewriter API not supported on this device');
@@ -39,15 +36,12 @@ export async function rewriteText(text: string, style?: string): Promise<string>
 
     return result || text;
   } catch (error) {
-    console.error('[Lexi] Rewrite error:', error);
     const errorMsg = error instanceof Error ? error.message : 'Rewrite failed';
     throw new Error(errorMsg);
   }
 }
 
-/**
- * Check if Rewriter API is available
- */
+// Check if Rewriter API is available
 export async function isRewriterAvailable(): Promise<boolean> {
   try {
     if (!(self as any).ai || !(self as any).ai.rewriter) {
@@ -61,9 +55,7 @@ export async function isRewriterAvailable(): Promise<boolean> {
   }
 }
 
-/**
- * Rewrite with specific tone
- */
+// Rewrite with specific tone
 export async function rewriteWithTone(
   text: string,
   tone: 'formal' | 'casual' | 'professional' | 'friendly'
@@ -71,9 +63,7 @@ export async function rewriteWithTone(
   return rewriteText(text, tone);
 }
 
-/**
- * Simplify text (make it easier to read)
- */
+// Simplify text (make it easier to read)
 export async function simplifyText(text: string): Promise<string> {
   try {
     // Try to rewrite with simpler language

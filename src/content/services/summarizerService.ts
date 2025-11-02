@@ -1,8 +1,6 @@
 // Summarizer Service - Wrapper for Chrome Summarizer API
 
-/**
- * Summarize text using Chrome's Summarizer API
- */
+// Summarize text using Chrome's Summarizer API
 export async function summarize(
   text: string,
   type: 'key-points' | 'tl;dr' | 'teaser' | 'headline',
@@ -35,14 +33,11 @@ export async function summarize(
 
     return result;
   } catch (error) {
-    console.error('Summarization error:', error);
     throw error;
   }
 }
 
-/**
- * Check if Summarizer API is available
- */
+// Check if Summarizer API is available
 export async function isSummarizerAvailable(): Promise<boolean> {
   try {
     if (!(self as any).Summarizer) {
@@ -56,30 +51,22 @@ export async function isSummarizerAvailable(): Promise<boolean> {
   }
 }
 
-/**
- * Get quick summary (TL;DR, short)
- */
+// Get quick summary (TL;DR, short)
 export async function getQuickSummary(text: string): Promise<string> {
   return summarize(text, 'tl;dr', 'short');
 }
 
-/**
- * Get key points from text
- */
+// Get key points from text
 export async function getKeyPoints(text: string): Promise<string> {
   return summarize(text, 'key-points', 'medium');
 }
 
-/**
- * Get headline/title for text
- */
+// Get headline/title for text
 export async function getHeadline(text: string): Promise<string> {
   return summarize(text, 'headline', 'short');
 }
 
-/**
- * Extract main article content from page
- */
+// Extract main article content from page
 export function extractArticleContent(): string {
   // Try to find main content
   const article = document.querySelector('article');

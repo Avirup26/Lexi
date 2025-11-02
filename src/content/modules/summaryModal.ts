@@ -1,4 +1,4 @@
-// Summary Modal - Article summarizer
+// Summary modal UI
 
 import { summarize, extractArticleContent } from '../services/summarizerService';
 import { updateData } from '../storage/storageManager';
@@ -8,24 +8,18 @@ import type { SummaryData } from '../types';
 
 let summaryModal: HTMLElement | null = null;
 
-/**
- * Initialize summary modal
- */
+// Init summary modal
 export function initializeSummaryModal(): void {
-  // Listen for summary button click
   document.addEventListener('open-summary-modal', showSummaryModal);
 }
 
-/**
- * Show summary modal
- */
+// Show modal
 export function showSummaryModal(): void {
   if (summaryModal) return;
 
   summaryModal = createSummaryModal();
   document.body.appendChild(summaryModal);
 
-  // Fade in
   requestAnimationFrame(() => {
     if (summaryModal) {
       summaryModal.style.opacity = '1';
@@ -33,9 +27,7 @@ export function showSummaryModal(): void {
   });
 }
 
-/**
- * Create summary modal
- */
+// Create modal
 function createSummaryModal(): HTMLElement {
   const modal = createElement('div', 'lexi-summary-modal');
 
@@ -206,11 +198,8 @@ function createSummaryModal(): HTMLElement {
   return modal;
 }
 
-/**
- * Apply modal styles
- */
+// Apply styles
 function applyModalStyles(modal: HTMLElement): void {
-  // Add keyframe animations if not already added
   if (!document.getElementById('lexi-summary-animations')) {
     const styleSheet = document.createElement('style');
     styleSheet.id = 'lexi-summary-animations';
@@ -266,15 +255,11 @@ function applyModalStyles(modal: HTMLElement): void {
   modal.style.cssText = styles;
 }
 
-/**
- * Attach event listeners
- */
+// Attach listeners
 function attachListeners(modal: HTMLElement): void {
-  // Close button
   const closeBtn = modal.querySelector('#lexi-summary-close');
   closeBtn?.addEventListener('click', hideSummaryModal);
 
-  // Backdrop click (close modal)
   const backdrop = modal.querySelector('.lexi-summary-backdrop');
   backdrop?.addEventListener('click', (e) => {
     if (e.target === backdrop) {
@@ -282,17 +267,14 @@ function attachListeners(modal: HTMLElement): void {
     }
   });
 
-  // Prevent clicks on container from closing modal
   const container = modal.querySelector('.lexi-summary-container');
   container?.addEventListener('click', (e) => {
     e.stopPropagation();
   });
 
-  // Generate button
   const generateBtn = modal.querySelector('#lexi-generate-btn');
   generateBtn?.addEventListener('click', handleGenerateSummary);
 
-  // ESC key to close
   const handleEscape = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       hideSummaryModal();
@@ -300,15 +282,12 @@ function attachListeners(modal: HTMLElement): void {
   };
   document.addEventListener('keydown', handleEscape);
   
-  // Store cleanup function
   (modal as any)._cleanup = () => {
     document.removeEventListener('keydown', handleEscape);
   };
 }
 
-/**
- * Handle generate summary
- */
+// Generate summary
 async function handleGenerateSummary(): Promise<void> {
   const typeSelect = document.getElementById('lexi-summary-type') as HTMLSelectElement;
   const lengthSelect = document.getElementById('lexi-summary-length') as HTMLSelectElement;
@@ -340,7 +319,6 @@ async function handleGenerateSummary(): Promise<void> {
       throw new Error('Not enough content to summarize. Paste at least 100 characters of text.');
     }
 
-    console.log('[Lexi] Summarizing', content.length, 'characters');
 
     // Generate summary
     const summary = await summarize(content, type, length);
@@ -363,9 +341,7 @@ async function handleGenerateSummary(): Promise<void> {
   }
 }
 
-/**
- * Display summary
- */
+// Display summary
 function displaySummary(summary: string, type: string): void {
   const resultDiv = document.getElementById('lexi-summary-result');
   if (!resultDiv) return;
@@ -405,9 +381,7 @@ function displaySummary(summary: string, type: string): void {
   });
 }
 
-/**
- * Copy summary to clipboard
- */
+// Copy to clipboard
 async function copySummary(summary: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(summary);
@@ -420,13 +394,10 @@ async function copySummary(summary: string): Promise<void> {
       }, 2000);
     }
   } catch (error) {
-    console.error('Copy failed:', error);
   }
 }
 
-/**
- * Save summary to storage
- */
+// Save summary
 async function saveSummary(
   original: string,
   summary: string,
@@ -455,12 +426,9 @@ async function saveSummary(
   });
 }
 
-/**
- * Hide summary modal
- */
+// Hide modal
 export function hideSummaryModal(): void {
   if (summaryModal) {
-    // Call cleanup function if it exists
     if ((summaryModal as any)._cleanup) {
       (summaryModal as any)._cleanup();
     }
@@ -473,9 +441,7 @@ export function hideSummaryModal(): void {
   }
 }
 
-/**
- * Escape HTML
- */
+// Escape HTML
 function escapeHtml(text: string): string {
   const div = document.createElement('div');
   div.textContent = text;
